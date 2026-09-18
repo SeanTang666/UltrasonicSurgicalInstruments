@@ -745,6 +745,30 @@
 
       </div>
 
+      <!-- Real-Time Multi-Trace Oscilloscope -->
+      <div class="scope-card">
+        <div class="scope-toolbar">
+          <div class="panel-title" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+            📊 閉環即時多通道示波器 (Dual-Axis Tracking & Multi-Channel Power DSO)
+          </div>
+          <div class="timebase-controls">
+            <span class="tb-label">⏱ 水平時基 (Timebase):</span>
+            <div class="tb-buttons" id="tbButtons">
+              <button class="btn-tb" data-time="0.05">50ms</button>
+              <button class="btn-tb" data-time="0.1">100ms</button>
+              <button class="btn-tb" data-time="0.5">0.5s</button>
+              <button class="btn-tb" data-time="1.0">1.0s</button>
+              <button class="btn-tb" data-time="2.5">2.5s</button>
+              <button class="btn-tb active" data-time="5.0">5.0s</button>
+              <button class="btn-tb" data-time="10.0">10.0s</button>
+            </div>
+            <span class="tb-info" id="tbInfoText">500 ms/div</span>
+            <button class="btn-tb" id="btnScopeFreeze" style="margin-left:6px; border-color:#f59e0b; color:#fbbf24; background:#1e293b;">⏸ 示波器鎖定 (Freeze)</button>
+          </div>
+        </div>
+        <canvas id="scopeCanvas"></canvas>
+      </div>
+
       <!-- 🔬 FPGA DPLL & ADC 射頻微觀週期波形與硬體架構解析面板 -->
       <div class="rf-inspector-card">
         <div class="rf-inspector-header">
@@ -802,30 +826,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Real-Time Multi-Trace Oscilloscope -->
-      <div class="scope-card">
-        <div class="scope-toolbar">
-          <div class="panel-title" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
-            📊 閉環即時多通道示波器 (Dual-Axis Tracking & Multi-Channel Power DSO)
-          </div>
-          <div class="timebase-controls">
-            <span class="tb-label">⏱ 水平時基 (Timebase):</span>
-            <div class="tb-buttons" id="tbButtons">
-              <button class="btn-tb" data-time="0.05">50ms</button>
-              <button class="btn-tb" data-time="0.1">100ms</button>
-              <button class="btn-tb" data-time="0.5">0.5s</button>
-              <button class="btn-tb" data-time="1.0">1.0s</button>
-              <button class="btn-tb" data-time="2.5">2.5s</button>
-              <button class="btn-tb active" data-time="5.0">5.0s</button>
-              <button class="btn-tb" data-time="10.0">10.0s</button>
-            </div>
-            <span class="tb-info" id="tbInfoText">500 ms/div</span>
-            <button class="btn-tb" id="btnScopeFreeze" style="margin-left:6px; border-color:#f59e0b; color:#fbbf24; background:#1e293b;">⏸ 示波器鎖定 (Freeze)</button>
-          </div>
-        </div>
-        <canvas id="scopeCanvas"></canvas>
       </div>
 
     </div>

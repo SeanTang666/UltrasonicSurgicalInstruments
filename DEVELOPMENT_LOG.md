@@ -348,3 +348,28 @@ Voltage / Current sensing → ADC → FPGA → 計算 Phase / Impedance → Reso
   - `[MODIFY] index.html`
   - `[MODIFY] ultrasonic_surgical_sim.py`
   - `[MODIFY] DEVELOPMENT_LOG.md`
+
+---
+
+### [Iteration 12] 2026-09-18 15:05:00
+- **User Prompt**:
+  ```text
+  這兩個信號框請對調
+  [用戶上傳圖片：紅框標註上方「55.5 kHz 射頻微觀週期交流正弦信號與 FPGA 閉環模組解析」，黃框標註下方「閉環即時多通道示波器」]
+  ```
+- **問題分析 (Problem Diagnosis)**:
+  - 使用者在操作模擬器與觀測手術刀動態響應時，「閉環即時多通道示波器 (Dual-Axis Tracking & Multi-Channel Power DSO)」負責呈現手術進程（0.5s~10s）之巨觀核心數據：雙軸頻率追蹤、相位差、驅動電壓、刀尖衝程與電流負載，是用戶進行工況判斷的最關鍵主儀表板。
+  - 「55.5 kHz 射頻微觀週期交流正弦信號與 FPGA 閉環模組解析 (Microscopic RF & FPGA Control Chain)」則提供微觀（36μs~540μs）射頻正弦波、過零時差、ADC 取樣點與 FPGA 4 級管線架構卡，屬於進階硬體深入透視與教學診斷用途。
+  - 原版面將微觀射頻模組置於上方、主示波器置於下方，在視覺流線上本末倒置，使用者需向下俯視才能監看巨觀即時趨勢。
+- **程式改進與動作 (Coding Improvements)**:
+  1. **訊號框位置順序對調 (DOM Hierarchy Swap)**：
+     - 將「📊 閉環即時多通道示波器 (`.scope-card`)」向上提升至換能器刀尖視覺動畫正下方，使巨觀時基（0.5s~10.0s）4 軌即時訊號成為主視覺焦點。
+     - 將「🔬 55.5 kHz 射頻微觀週期交流正弦信號與 FPGA 閉環模組解析 (`.rf-inspector-card`)」順勢調整至下方，作為深入研究 FPGA DDS / ADC 閉環機制之微觀分析工作台。
+  2. **跨平台與 GitHub Pages 部署**：
+     - 同步覆蓋更新 GitHub Pages 靜態網站入口 `index.html`。
+     - 自動記錄日誌並推送到 GitHub 遠端倉庫。
+- **修改檔案**:
+  - `[MODIFY] simulator.html`
+  - `[MODIFY] index.html`
+  - `[MODIFY] DEVELOPMENT_LOG.md`
+
