@@ -941,31 +941,36 @@
 
     slideDamping.addEventListener('input', (e) => {
       scenario = "manual";
-      Physics.tissueDamping = parseFloat(e.target.value);
-      document.getElementById('val-damping').textContent = `${e.target.value} Ω`;
+      const val = Math.round(parseFloat(e.target.value) || 0);
+      Physics.tissueDamping = val;
+      document.getElementById('val-damping').textContent = `${val} Ω`;
     });
 
     slideClamp.addEventListener('input', (e) => {
       scenario = "manual";
-      Physics.clampPressure = parseFloat(e.target.value) / 100.0;
-      document.getElementById('val-clamp').textContent = `${e.target.value} %`;
+      const val = Math.round(parseFloat(e.target.value) || 0);
+      Physics.clampPressure = val / 100.0;
+      document.getElementById('val-clamp').textContent = `${val} %`;
     });
 
     slideStiffness.addEventListener('input', (e) => {
       scenario = "manual";
-      Physics.tissueStiffness = parseFloat(e.target.value);
-      document.getElementById('val-stiffness').textContent = `${e.target.value} Hz`;
+      const val = Math.round(parseFloat(e.target.value) || 0);
+      Physics.tissueStiffness = val;
+      document.getElementById('val-stiffness').textContent = `${val} Hz`;
     });
 
     slideTemp.addEventListener('input', (e) => {
-      Physics.temperature = parseFloat(e.target.value);
-      document.getElementById('val-temp').textContent = `${Physics.temperature.toFixed(1)} °C`;
+      const val = parseFloat(e.target.value) || 25.0;
+      Physics.temperature = val;
+      document.getElementById('val-temp').textContent = `${val.toFixed(1)} °C`;
     });
 
     slideManualF.addEventListener('input', (e) => {
       if (!FPGA.pllEnabled) {
-        FPGA.driveFreq = parseFloat(e.target.value);
-        document.getElementById('val-manual-f').textContent = `${parseInt(e.target.value).toLocaleString()} Hz`;
+        const val = Math.round(parseFloat(e.target.value) || 55500);
+        FPGA.driveFreq = val;
+        document.getElementById('val-manual-f').textContent = `${val.toLocaleString()} Hz`;
       }
     });
 
@@ -999,17 +1004,21 @@
     });
 
     function setStimulus(damping, clamp, stiffness) {
-      Physics.tissueDamping = damping;
-      Physics.clampPressure = clamp / 100.0;
-      Physics.tissueStiffness = stiffness;
+      const d = Math.round(damping);
+      const c = Math.round(clamp);
+      const s = Math.round(stiffness);
 
-      slideDamping.value = damping;
-      slideClamp.value = clamp;
-      slideStiffness.value = stiffness;
+      Physics.tissueDamping = d;
+      Physics.clampPressure = c / 100.0;
+      Physics.tissueStiffness = s;
 
-      document.getElementById('val-damping').textContent = `${damping} Ω`;
-      document.getElementById('val-clamp').textContent = `${clamp} %`;
-      document.getElementById('val-stiffness').textContent = `${stiffness} Hz`;
+      slideDamping.value = d;
+      slideClamp.value = c;
+      slideStiffness.value = s;
+
+      document.getElementById('val-damping').textContent = `${d} Ω`;
+      document.getElementById('val-clamp').textContent = `${c} %`;
+      document.getElementById('val-stiffness').textContent = `${s} Hz`;
     }
 
     // -------------------------------------------------------------

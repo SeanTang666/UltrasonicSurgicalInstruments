@@ -7,12 +7,32 @@
 ## 🎯 初始專案目標與 Prompt (Initial Project Inception Prompt)
 
 ### 1. 系統設計核心目標
-> **開發 ETHICON™ GEN11 超音波手術刀即時閉環追頻與能量控制模擬系統**  
+
+> **開發 ETHICON™ GEN11 超音波手術刀即時閉環追頻與能量控制模擬系統**
 > 涵蓋壓電換能器 Butterworth-Van Dyke (BVD) 等效電路、微秒級 FPGA DPLL 諧振追頻、碰骨/金屬夾失諧保護與自動 Chirp 掃頻自愈、ATT (Adaptive Tissue Technology) 組織離斷感測，並提供 60 FPS 跨平台 Web 儀表板與 Python Tkinter 桌面獨立 GUI。
 
 ### 2. 初始任務提示詞 (Initial Prompt)
+
 ```text
-git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanTang666/UltrasonicSurgicalInstruments)
+超聲刀的關鍵，提到要精準控制頻率，其中最關鍵的是 Resonance Tracking Algorithm，共振追頻演算法。
+超聲刀不是「固定輸出 55.5 kHz 就好」。Handpiece 裡面的 piezoelectric transducer + waveguide + blade 是一套機械共振系統。
+例如一支刀頭空載時可能：
+Resonance frequency = 55.50 kHz
+但夾住組織後，因為 mechanical load 改變，可能變成：
+55.42 kHz
+使用一段時間溫度升高，又可能變成：
+55.36 kHz
+如果 generator 還是死守 55.50 kHz，可能會發生：
+振幅下降 → cutting efficiency 下降 → 功率浪費 → transducer 發熱 → 甚至可能損壞 handpiece。
+所以 FPGA 會非常快速地量：
+Voltage → Current → Phase → Impedance
+然後控制演算法持續調整輸出 frequency。
+可以把整個 closed-loop 想成：
+FPGA產生頻率 → Power amplifier → Handpiece → Piezo → Blade
+同時：
+Voltage / Current sensing → ADC → FPGA → 計算 Phase / Impedance → Resonance tracking → 修正 frequency
+然後再回去調整 waveform。
+這就是為什麼你們客戶說要「重新建立完整控制系統、演算法及軟體」，請幫我做一個即時的訊號模擬程式，讓真實的超聲刀切割人體組織所形成的阻抗當成stimulus，並讓各種變因可由使用者設定。整個即時模擬器就像示波器那樣可以即時的選擇想要觀測的信號，在同一時間發生了什麼變化(時間同步要很精確)。
 ```
 
 ---
@@ -20,6 +40,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ## 📜 歷次 Coding Improvement 完整更新紀錄
 
 ### [Iteration 1] 2026-09-18 10:42:04
+
 - **User Prompt**:
   ```text
   git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanTang666/UltrasonicSurgicalInstruments)
@@ -40,6 +61,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ---
 
 ### [Iteration 2] 2026-09-18 10:56:38
+
 - **User Prompt**:
   ```text
   git push -u origin main怎麼跑那麼久？
@@ -48,8 +70,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
   - 檢查 Windows 認證庫發現 `git:https://github.com` 預設綁定舊帳號，而目標帳號的憑證記錄於 `git:https://SeanTang666@github.com`。通用 URL 觸發 Git Credential Manager 在背景等待非互動式驗證而掛起。
 - **程式改進與動作 (Coding Improvements)**:
   1. 終止掛起的背景推送任務。
-  2. 將 Remote URL 更新為明確包含帳號的規格：  
-     `https://SeanTang666@github.com/SeanTang666/UltrasonicSurgicalInstruments.git`。
+  2. 將 Remote URL 更新為明確包含帳號的規格：`https://SeanTang666@github.com/SeanTang666/UltrasonicSurgicalInstruments.git`。
   3. 成功觸發 Windows 憑證自動匹配，4 秒內完成推送至 `origin/main`。
 - **修改檔案**:
   - Git configuration / Remote URL
@@ -57,6 +78,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ---
 
 ### [Iteration 3] 2026-09-18 11:01:31 ~ 11:05:19
+
 - **User Prompt**:
   ```text
   請幫我改成一樣可以在github佈署網頁
@@ -77,6 +99,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ---
 
 ### [Iteration 4] 2026-09-18 11:37:30
+
 - **User Prompt**:
   ```text
   箭頭所指之處會有顯示抖動的問題
@@ -100,6 +123,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ---
 
 ### [Iteration 5] 2026-09-18 13:28:37
+
 - **User Prompt**:
   ```text
   這兩個畫面的字體可以加大，目前這樣看不清楚
@@ -120,6 +144,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ---
 
 ### [Iteration 6] 2026-09-18 13:54:07
+
 - **User Prompt**:
   ```text
   1.黃框1版面不用占那麼大，內部的顯示可以縮小一些，看的清楚就好. 
@@ -154,6 +179,7 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
 ---
 
 ### [Iteration 7] 2026-09-18 14:20:00
+
 - **User Prompt**:
   ```text
   1. 兩個黃框可以合併，相位的標示可以放在合併框的右邊，才不會重疊。這樣可以省下空間給紅框模擬更多訊號 
@@ -185,4 +211,31 @@ git push to [SeanTang666/UltrasonicSurgicalInstruments](https://github.com/SeanT
   - `[MODIFY] ultrasonic_surgical_sim.py`
   - `[MODIFY] DEVELOPMENT_LOG.md`
 
+---
+
+### [Iteration 8] 2026-09-18 14:33:00
+- **User Prompt**:
+  ```text
+  數字的小數點要限制，
+  [用戶上傳圖片：組織聲阻尼顯示 168.94736842105246 Ω，組織剛性共振頻偏顯示 -98.42105263157883 Hz]
+  ```
+- **問題分析 (Problem Diagnosis)**:
+  - 臨床時序自動運算情境（如「血管閉合切斷全流程 (Seal & Transect)」）中，組織聲阻尼、剛度頻偏與夾持力以插值公式計算（例如 `30 + 110 * (t / 1.5)`）。
+  - 在傳遞給 `setStimulus(damping, clamp, stiffness)` 時，未先進行整數取整或小數點格式化限制，直接以 `${damping} Ω` 與 `${stiffness} Hz` 插值輸出至 DOM，造成介面上出現十幾位浮點數殘留（如 `168.94736842105246 Ω`、`-98.42105263157883 Hz`），破壞介面版面整潔與讀取舒適度。
+- **程式改進與動作 (Coding Improvements)**:
+  1. **變因與滑桿數值取整限制**：
+     - 在 `setStimulus(damping, clamp, stiffness)` 函式中全面引入 `Math.round()` 四捨五入取整：
+       - `val-damping`: `${Math.round(damping)} Ω`
+       - `val-clamp`: `${Math.round(clamp)} %`
+       - `val-stiffness`: `${Math.round(stiffness)} Hz`
+     - 同時將 `slideDamping.value`、`slideClamp.value`、`slideStiffness.value` 同步寫入整數值，防止滑桿與文字不同步。
+  2. **滑桿手動事件防護**：
+     - 在 `slideDamping`、`slideClamp`、`slideStiffness` 及 `slideManualF` 的 `input` 監聽器中加入 `Math.round(parseFloat(...) || 0)`，徹底杜絕浮點數溢位字串。
+     - `slideTemp` 嚴格限制為 1 位小數（`${val.toFixed(1)} °C`）。
+  3. **全站與 GitHub Pages 同步**：
+     - 同步更新 `simulator.html` 與 `index.html`。
+- **修改檔案**:
+  - `[MODIFY] simulator.html`
+  - `[MODIFY] index.html`
+  - `[MODIFY] DEVELOPMENT_LOG.md`
 
