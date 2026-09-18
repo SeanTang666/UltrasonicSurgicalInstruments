@@ -154,7 +154,7 @@
       padding: 12px;
     }
     .panel-title {
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--cyan);
       margin-bottom: 10px;
@@ -265,7 +265,7 @@
     }
     #knifeCanvas {
       width: 100%;
-      height: 150px;
+      height: 175px;
       background: #080d14;
       border-radius: 8px;
       display: block;
@@ -301,7 +301,7 @@
     }
     #scopeCanvas {
       width: 100%;
-      height: 380px;
+      height: 460px;
       background: #06090e;
       border-radius: 8px;
       display: block;
@@ -994,7 +994,7 @@
       knifeCtx.scale(dpr, dpr);
       const cw = w / dpr;
       const ch = h / dpr;
-      const midY = ch / 2;
+      const midY = ch / 2 + 6;
 
       // 1. Handpiece Piezo PZT Stack
       const pztX = 30;
@@ -1010,13 +1010,13 @@
         knifeCtx.fillStyle = (i % 2 === 0) ? '#0284c7' : '#818cf8';
         knifeCtx.fillRect(pztX + 12 + i * 26, midY - pztH/2 + 6, 16, pztH - 12);
       }
-      knifeCtx.fillStyle = '#94a3b8';
-      knifeCtx.font = '10px Segoe UI';
-      knifeCtx.fillText('Piezo PZT Stack (4 Rings)', pztX + 5, midY - pztH/2 - 6);
+      knifeCtx.fillStyle = '#cbd5e1';
+      knifeCtx.font = 'bold 13px Segoe UI';
+      knifeCtx.fillText('Piezo PZT Stack (4 Rings)', pztX + 2, midY - pztH/2 - 8);
 
       // 2. Titanium Waveguide Horn
       const hornStart = pztX + pztW;
-      const hornEnd = cw - 260;
+      const hornEnd = cw - 270;
       knifeCtx.fillStyle = '#64748b';
       knifeCtx.strokeStyle = '#94a3b8';
       knifeCtx.beginPath();
@@ -1027,8 +1027,9 @@
       knifeCtx.closePath();
       knifeCtx.fill();
       knifeCtx.stroke();
-      knifeCtx.fillStyle = '#94a3b8';
-      knifeCtx.fillText('Titanium Waveguide (Acoustic Velocity Transformer)', (hornStart + hornEnd)/2 - 110, midY - 18);
+      knifeCtx.fillStyle = '#f1f5f9';
+      knifeCtx.font = 'bold 13px Segoe UI';
+      knifeCtx.fillText('Titanium Waveguide (Acoustic Velocity Transformer)', (hornStart + hornEnd)/2 - 150, midY - 18);
 
       // 3. Blade Tip Vibration
       const vib = FPGA.powerActive ? (Math.sin(simTime * 35.0) * (Physics.amplitude_um / 12.0)) : 0.0;
@@ -1049,14 +1050,14 @@
 
       // 4. Teflon Clamp Pad
       const clampGap = Math.max(5, 36 * (1.0 - Physics.clampPressure));
-      const padY = midY - clampGap - 12;
+      const padY = midY - clampGap - 14;
       knifeCtx.fillStyle = '#f8fafc';
       knifeCtx.strokeStyle = '#cbd5e1';
       knifeCtx.fillRect(tipX + 5, padY, 70, 10);
       knifeCtx.strokeRect(tipX + 5, padY, 70, 10);
-      knifeCtx.fillStyle = '#cbd5e1';
-      knifeCtx.font = '9px Segoe UI';
-      knifeCtx.fillText('PTFE Pad', tipX + 18, padY - 4);
+      knifeCtx.fillStyle = '#ffffff';
+      knifeCtx.font = 'bold 12px Segoe UI';
+      knifeCtx.fillText('PTFE Pad', tipX + 10, padY - 6);
 
       // 5. Human Tissue
       if (Physics.clampPressure > 0.04) {
@@ -1075,15 +1076,15 @@
             knifeCtx.arc(bx, by, 2.5, 0, Math.PI * 2);
             knifeCtx.fill();
           }
-          knifeCtx.fillStyle = '#e0f2fe';
-          knifeCtx.font = 'italic 9px Segoe UI';
-          knifeCtx.fillText('Cavitation Vapor', tipX + 22, midY - 38);
+          knifeCtx.fillStyle = '#38bdf8';
+          knifeCtx.font = 'bold italic 13px Segoe UI';
+          knifeCtx.fillText('Cavitation Vapor', tipX + 16, midY - 42);
         }
       }
 
       knifeCtx.fillStyle = '#00f0ff';
-      knifeCtx.font = 'bold 11px Segoe UI';
-      knifeCtx.fillText(`↔ Tip Stroke: ${Physics.amplitude_um.toFixed(1)} μm pk-pk`, tipX + 88, midY + 18);
+      knifeCtx.font = 'bold 14px Segoe UI';
+      knifeCtx.fillText(`↔ Tip Stroke: ${Physics.amplitude_um.toFixed(1)} μm pk-pk`, tipX + 92, midY + 6);
 
       knifeCtx.restore();
     }
@@ -1100,9 +1101,10 @@
       const ch = h / dpr;
 
       const subH = ch / 3;
-      const marginL = 60;
-      const marginR = 20;
+      const marginL = 76;
+      const marginR = 24;
       const plotW = cw - marginL - marginR;
+      const legendX = Math.max(marginL + plotW - 390, cw - 410);
 
       // Scope 1: Frequency Tracking (54.0 kHz ~ 57.0 kHz)
       drawSubScopeFrame(scopeCtx, marginL, 10, plotW, subH - 18, 
@@ -1112,11 +1114,11 @@
       drawTrace(scopeCtx, history.fs_target, marginL, 10, plotW, subH - 18, fMin, fMax, '#f59e0b', [4, 3]);
       drawTrace(scopeCtx, history.drive_f, marginL, 10, plotW, subH - 18, fMin, fMax, '#00f0ff', []);
       
+      scopeCtx.font = 'bold 12.5px Segoe UI';
       scopeCtx.fillStyle = '#f59e0b';
-      scopeCtx.font = '10px Segoe UI';
-      scopeCtx.fillText('-- 刀尖固有諧振頻率 (Target fs, 含組織與溫漂)', cw - 260, 26);
+      scopeCtx.fillText('-- 刀尖固有諧振頻率 (Target fs, 含組織與溫漂)', legendX, 30);
       scopeCtx.fillStyle = '#00f0ff';
-      scopeCtx.fillText('— FPGA DDS 輸出驅動頻率 (Drive f)', cw - 260, 40);
+      scopeCtx.fillText('— FPGA DDS 輸出驅動頻率 (Drive f)', legendX, 50);
 
       // Scope 2: Phase Angle Difference (-50° ~ +50°)
       const y2 = subH + 4;
@@ -1133,8 +1135,9 @@
       scopeCtx.setLineDash([]);
 
       drawTrace(scopeCtx, history.phase, marginL, y2, plotW, subH - 18, -50, 50, '#a855f7', []);
-      scopeCtx.fillStyle = '#a855f7';
-      scopeCtx.fillText('— 相位差 Δφ (0° 意味純電阻性，轉換效率最高)', cw - 260, y2 + 20);
+      scopeCtx.font = 'bold 12.5px Segoe UI';
+      scopeCtx.fillStyle = '#c084fc';
+      scopeCtx.fillText('— 相位差 Δφ (0° 意味純電阻性，轉換效率最高)', legendX, y2 + 30);
 
       // Scope 3: Power Regulation
       const y3 = subH * 2 - 2;
@@ -1144,10 +1147,11 @@
       drawTrace(scopeCtx, history.dac_v, marginL, y3, plotW, subH - 18, 0, 160, '#f59e0b', []);
       drawTrace(scopeCtx, history.amplitude, marginL, y3, plotW, subH - 18, 0, 120, '#ec4899', []);
 
+      scopeCtx.font = 'bold 12.5px Segoe UI';
       scopeCtx.fillStyle = '#f59e0b';
-      scopeCtx.fillText('— DAC 驅動電壓 (Vrms)', cw - 260, y3 + 20);
-      scopeCtx.fillStyle = '#ec4899';
-      scopeCtx.fillText('— 刀尖機械位移振幅 (μm pk-pk)', cw - 260, y3 + 34);
+      scopeCtx.fillText('— DAC 驅動電壓 (Vrms)', legendX, y3 + 30);
+      scopeCtx.fillStyle = '#f472b6';
+      scopeCtx.fillText('— 刀尖機械位移振幅 (μm pk-pk)', legendX, y3 + 50);
 
       scopeCtx.restore();
     }
@@ -1159,14 +1163,14 @@
       ctx.lineWidth = 1;
       ctx.strokeRect(x, y, w, h);
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '10px Segoe UI';
-      ctx.fillText(title, x + 8, y + 14);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 13.5px Segoe UI';
+      ctx.fillText(title, x + 12, y + 20);
 
-      ctx.fillStyle = '#475569';
-      ctx.font = '9px monospace';
-      ctx.fillText(maxLabel, x - 52, y + 10);
-      ctx.fillText(minLabel, x - 52, y + h - 2);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 11.5px monospace';
+      ctx.fillText(maxLabel, x - 70, y + 14);
+      ctx.fillText(minLabel, x - 70, y + h - 4);
     }
 
     function drawTrace(ctx, dataArr, x, y, w, h, minVal, maxVal, color, dash) {

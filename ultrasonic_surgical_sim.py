@@ -658,7 +658,7 @@ class UltrasonicSimulatorApp:
         pzt_x1 = 150
         pzt_y1 = h // 2 + 32
         cv.create_rectangle(pzt_x0, pzt_y0, pzt_x1, pzt_y1, fill="#1e293b", outline="#475569", width=2)
-        cv.create_text((pzt_x0 + pzt_x1)//2, pzt_y0 - 10, text="4-Piezo PZT Stack", fill="#94a3b8", font=("Segoe UI", 8, "bold"))
+        cv.create_text((pzt_x0 + pzt_x1)//2, pzt_y0 - 10, text="4-Piezo PZT Stack", fill="#cbd5e1", font=("Segoe UI", 10, "bold"))
         
         for i in range(4):
             dx = pzt_x0 + 10 + i * 25
@@ -683,7 +683,7 @@ class UltrasonicSimulatorApp:
             horn_x0, y_mid + 24,
             fill="#64748b", outline="#94a3b8"
         )
-        cv.create_text((horn_x0 + horn_x1)//2, y_mid - 20, text="Titanium Acoustic Waveguide (λ/2 Horn)", fill="#94a3b8", font=("Segoe UI", 8))
+        cv.create_text((horn_x0 + horn_x1)//2, y_mid - 20, text="Titanium Acoustic Waveguide (λ/2 Horn)", fill="#f1f5f9", font=("Segoe UI", 10, "bold"))
 
         # 3. Blade Tip
         tip_x0 = horn_x1
@@ -701,7 +701,7 @@ class UltrasonicSimulatorApp:
         clamp_gap = max(4.0, 30.0 * (1.0 - self.physics.clamp_pressure))
         clamp_y = y_mid - clamp_gap - 12
         cv.create_rectangle(tip_x0, clamp_y, tip_x0 + 70, clamp_y + 10, fill="#f8fafc", outline="#cbd5e1")
-        cv.create_text(tip_x0 + 35, clamp_y - 8, text="PTFE Tissue Pad", fill="#cbd5e1", font=("Segoe UI", 7))
+        cv.create_text(tip_x0 + 35, clamp_y - 8, text="PTFE Tissue Pad", fill="#ffffff", font=("Segoe UI", 9, "bold"))
 
         # 5. Human Tissue
         tissue_h = max(2.0, clamp_gap)
@@ -713,7 +713,7 @@ class UltrasonicSimulatorApp:
                     bx = tip_x0 + 20 + b * 10 + math.sin(self.sim_time * 10 + b) * 5
                     by = y_mid - 15 - b * 8
                     cv.create_oval(bx, by, bx+4, by+4, fill="#e0f2fe", outline="")
-                cv.create_text(tip_x0 + 35, y_mid - 28, text="Cavitation Vapor", fill="#e0f2fe", font=("Segoe UI", 7, "italic"))
+                cv.create_text(tip_x0 + 35, y_mid - 28, text="Cavitation Vapor", fill="#38bdf8", font=("Segoe UI", 9, "bold", "italic"))
 
         # 6. Status and Alerts
         if not self.fpga.power_active:
@@ -730,7 +730,7 @@ class UltrasonicSimulatorApp:
             cv.create_text(w - 127, 37, text=f"Scenario: {self.current_scenario.upper()}\nGrip: {int(self.physics.clamp_pressure*100)}% | Active", fill="#94a3b8", font=("Segoe UI", 8), justify=tk.CENTER)
 
         # Vibration displacement indicator
-        cv.create_text(tip_x1 + 18, y_mid + 20, text=f"↔ {self.physics.blade_amplitude_um:0.1f} μm pk-pk", fill="#38bdf8", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+        cv.create_text(tip_x1 + 18, y_mid + 20, text=f"↔ {self.physics.blade_amplitude_um:0.1f} μm pk-pk", fill="#38bdf8", font=("Segoe UI", 11, "bold"), anchor=tk.W)
 
     def render_oscilloscope(self):
         cv = self.scope_canvas
@@ -748,13 +748,13 @@ class UltrasonicSimulatorApp:
         # Scope 1: Frequency Tracking (54.0 kHz to 57.0 kHz)
         y0_1 = margin_top
         y1_1 = y0_1 + plot_h - 10
-        self.draw_subscope_frame(cv, 50, y0_1, w - 20, y1_1, "Scope 1: Frequency Resonance Tracking (FPGA DDS vs Mechanical fs)", "57.0 kHz", "54.0 kHz")
+        self.draw_subscope_frame(cv, 65, y0_1, w - 20, y1_1, "Scope 1: Frequency Resonance Tracking (FPGA DDS vs Mechanical fs)", "57.0 kHz", "54.0 kHz")
         
         pts_target_fs = []
         pts_drive_f = []
         f_min, f_max = 54000.0, 57000.0
         for i in range(self.buf_size):
-            x = 50 + (i / (self.buf_size - 1)) * (w - 70)
+            x = 65 + (i / (self.buf_size - 1)) * (w - 85)
             y_tgt = y1_1 - ((self.fs_target_buf[i] - f_min) / (f_max - f_min)) * (y1_1 - y0_1)
             y_drv = y1_1 - ((self.freq_buf[i] - f_min) / (f_max - f_min)) * (y1_1 - y0_1)
             pts_target_fs.extend([x, max(y0_1, min(y1_1, y_tgt))])
@@ -762,36 +762,36 @@ class UltrasonicSimulatorApp:
         
         cv.create_line(pts_target_fs, fill="#fbbf24", width=2, dash=(4, 2))
         cv.create_line(pts_drive_f, fill="#00e5ff", width=2)
-        cv.create_text(w - 240, y0_1 + 12, text="-- Target fs (Tissue/Temp Drift)", fill="#fbbf24", font=("Segoe UI", 7, "bold"), anchor=tk.W)
-        cv.create_text(w - 240, y0_1 + 24, text="— FPGA DDS Driving Freq", fill="#00e5ff", font=("Segoe UI", 7, "bold"), anchor=tk.W)
+        cv.create_text(w - 290, y0_1 + 14, text="-- Target fs (Tissue/Temp Drift)", fill="#fbbf24", font=("Segoe UI", 9, "bold"), anchor=tk.W)
+        cv.create_text(w - 290, y0_1 + 28, text="— FPGA DDS Driving Freq", fill="#00e5ff", font=("Segoe UI", 9, "bold"), anchor=tk.W)
 
         # Scope 2: Phase Difference (-50 deg to +50 deg)
         y0_2 = y1_1 + 10
         y1_2 = y0_2 + plot_h - 10
-        self.draw_subscope_frame(cv, 50, y0_2, w - 20, y1_2, "Scope 2: Impedance Phase Error (V vs I Phase Angle - Target = 0° Resonance)", "+50°", "-50°")
+        self.draw_subscope_frame(cv, 65, y0_2, w - 20, y1_2, "Scope 2: Impedance Phase Error (V vs I Phase Angle - Target = 0° Resonance)", "+50°", "-50°")
         
         y_zero = (y0_2 + y1_2) / 2
-        cv.create_line(50, y_zero, w - 20, y_zero, fill="#334155", width=1, dash=(2, 2))
+        cv.create_line(65, y_zero, w - 20, y_zero, fill="#334155", width=1, dash=(2, 2))
 
         pts_phase = []
         for i in range(self.buf_size):
-            x = 50 + (i / (self.buf_size - 1)) * (w - 70)
+            x = 65 + (i / (self.buf_size - 1)) * (w - 85)
             deg = self.phase_buf[i]
             y_p = y_zero - (deg / 50.0) * ((y1_2 - y0_2) / 2)
             pts_phase.extend([x, max(y0_2, min(y1_2, y_p))])
         
         cv.create_line(pts_phase, fill="#a855f7", width=2)
-        cv.create_text(w - 220, y0_2 + 12, text="— Phase Angle (0° = Resonance)", fill="#a855f7", font=("Segoe UI", 7, "bold"), anchor=tk.W)
+        cv.create_text(w - 270, y0_2 + 14, text="— Phase Angle (0° = Resonance)", fill="#a855f7", font=("Segoe UI", 9, "bold"), anchor=tk.W)
 
         # Scope 3: DAC Voltage Command & Blade Amplitude
         y0_3 = y1_2 + 10
         y1_3 = y0_3 + plot_h - 10
-        self.draw_subscope_frame(cv, 50, y0_3, w - 20, y1_3, "Scope 3: Power Regulation (DAC Drive Voltage Vrms & Blade Displacement Amplitude μm)", "160V/μm", "0")
+        self.draw_subscope_frame(cv, 65, y0_3, w - 20, y1_3, "Scope 3: Power Regulation (DAC Drive Voltage Vrms & Blade Displacement Amplitude μm)", "160V/μm", "0")
 
         pts_dac = []
         pts_amp = []
         for i in range(self.buf_size):
-            x = 50 + (i / (self.buf_size - 1)) * (w - 70)
+            x = 65 + (i / (self.buf_size - 1)) * (w - 85)
             y_d = y1_3 - (self.v_buf[i] / 160.0) * (y1_3 - y0_3)
             y_a = y1_3 - (self.amp_buf[i] / 120.0) * (y1_3 - y0_3)
             pts_dac.extend([x, max(y0_3, min(y1_3, y_d))])
@@ -799,15 +799,15 @@ class UltrasonicSimulatorApp:
 
         cv.create_line(pts_dac, fill="#fbbf24", width=2)
         cv.create_line(pts_amp, fill="#f43f5e", width=2)
-        cv.create_text(w - 220, y0_3 + 12, text="— DAC Drive Voltage (Vrms)", fill="#fbbf24", font=("Segoe UI", 7, "bold"), anchor=tk.W)
-        cv.create_text(w - 220, y0_3 + 24, text="— Tip Amplitude (μm Displacement)", fill="#f43f5e", font=("Segoe UI", 7, "bold"), anchor=tk.W)
+        cv.create_text(w - 270, y0_3 + 14, text="— DAC Drive Voltage (Vrms)", fill="#fbbf24", font=("Segoe UI", 9, "bold"), anchor=tk.W)
+        cv.create_text(w - 270, y0_3 + 28, text="— Tip Amplitude (μm Displacement)", fill="#f43f5e", font=("Segoe UI", 9, "bold"), anchor=tk.W)
 
     def draw_subscope_frame(self, cv, x0, y0, x1, y1, title, max_label, min_label):
         cv.create_rectangle(x0, y0, x1, y1, fill="#070a0e", outline="#1e293b")
         cv.create_line(x0, (y0+y1)/2, x1, (y0+y1)/2, fill="#111827", dash=(2, 4))
-        cv.create_text(x0 + 10, y0 + 10, text=title, fill="#94a3b8", font=("Segoe UI", 8, "bold"), anchor=tk.W)
-        cv.create_text(x0 - 5, y0 + 8, text=max_label, fill="#64748b", font=("Segoe UI", 7), anchor=tk.E)
-        cv.create_text(x0 - 5, y1 - 8, text=min_label, fill="#64748b", font=("Segoe UI", 7), anchor=tk.E)
+        cv.create_text(x0 + 10, y0 + 12, text=title, fill="#f1f5f9", font=("Segoe UI", 10, "bold"), anchor=tk.W)
+        cv.create_text(x0 - 6, y0 + 10, text=max_label, fill="#94a3b8", font=("Segoe UI", 8, "bold"), anchor=tk.E)
+        cv.create_text(x0 - 6, y1 - 10, text=min_label, fill="#94a3b8", font=("Segoe UI", 8, "bold"), anchor=tk.E)
 
 
 # ----------------------------------------------------------------------
