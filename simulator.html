@@ -22,11 +22,11 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
-    /* Header */
+    /* Header (Yellow Box 1 Compact) */
     header {
       background: linear-gradient(90deg, #111827, #1e293b);
       border-bottom: 1px solid var(--border-color);
-      padding: 12px 24px;
+      padding: 6px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -34,27 +34,27 @@
       top: 0;
       z-index: 100;
     }
-    .header-title h1 { font-size: 1.15rem; font-weight: 700; color: var(--cyan); letter-spacing: 0.5px; }
-    .header-title p { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+    .header-title h1 { font-size: 0.96rem; font-weight: 700; color: var(--cyan); letter-spacing: 0.3px; }
+    .header-title p { font-size: 0.72rem; color: var(--text-dim); margin-top: 1px; }
     
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-power {
       background: #059669;
       color: white;
       border: 1px solid #10b981;
-      padding: 7px 14px;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      padding: 5px 11px;
+      border-radius: 5px;
+      font-size: 0.75rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.2s;
     }
     .btn-power:hover { background: #10b981; }
@@ -68,9 +68,9 @@
       background: #2563eb;
       color: white;
       border: 1px solid #3b82f6;
-      padding: 7px 14px;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      padding: 5px 11px;
+      border-radius: 5px;
+      font-size: 0.75rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
@@ -81,68 +81,69 @@
       background: rgba(16, 185, 129, 0.15);
       border: 1px solid var(--green);
       color: var(--green);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.72rem;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
     .live-badge.standby {
       background: rgba(245, 158, 11, 0.15);
       border-color: var(--yellow);
       color: var(--yellow);
     }
-    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 1.5s infinite; }
-    .live-badge.standby .live-dot { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.5s infinite; }
+    .live-badge.standby .live-dot { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-    /* Signal Chain Ribbon */
+    /* Signal Chain Ribbon (Compact) */
     .chain-flow {
       background: #0f1622;
       border-bottom: 1px solid var(--border-color);
-      padding: 8px 24px;
+      padding: 4px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       overflow-x: auto;
-      gap: 8px;
+      gap: 6px;
     }
     .chain-node {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      padding: 5px 8px;
-      border-radius: 6px;
-      font-size: 0.72rem;
+      padding: 3px 6px;
+      border-radius: 5px;
+      font-size: 0.68rem;
       font-weight: 600;
       white-space: nowrap;
       color: var(--text-dim);
       display: flex;
       flex-direction: column;
       align-items: center;
-      flex: 1 1 110px;
-      min-width: 105px;
+      flex: 1 1 85px;
+      min-width: 80px;
       text-align: center;
     }
     .chain-node small {
       font-variant-numeric: tabular-nums;
       font-family: 'Courier New', Courier, monospace;
       font-weight: 700;
+      font-size: 0.65rem;
     }
     .chain-node.active-fpga { border-color: var(--purple); color: #c4b5fd; background: rgba(139, 92, 246, 0.1); }
     .chain-node.active-driver { border-color: var(--cyan); color: #a5f3fc; background: rgba(0, 240, 255, 0.1); }
     .chain-node.active-blade { border-color: var(--green); color: #a7f3d0; background: rgba(16, 185, 129, 0.1); }
     .chain-node.active-tissue { border-color: var(--red); color: #fca5a5; background: rgba(239, 68, 68, 0.1); }
     .chain-node.active-sense { border-color: var(--yellow); color: #fde68a; background: rgba(245, 158, 11, 0.1); }
-    .chain-arrow { color: #475569; font-size: 0.8rem; font-weight: bold; }
+    .chain-arrow { color: #475569; font-size: 0.7rem; font-weight: bold; }
 
     /* Main Grid */
     .main-grid {
       display: grid;
-      grid-template-columns: 370px 1fr;
-      gap: 16px;
-      padding: 16px 24px;
+      grid-template-columns: 360px 1fr;
+      gap: 12px;
+      padding: 10px 18px;
     }
 
     /* Left Control Sidebar */
@@ -253,87 +254,116 @@
     input:checked + .slider-toggle:before { transform: translateX(18px); }
 
     /* Right Main Display Area */
-    .display-area { display: flex; flex-direction: column; gap: 12px; }
+    .display-area { display: flex; flex-direction: column; gap: 10px; }
 
-    /* Physical Animation Canvas Box */
-    .anim-card {
+    /* Combined Physical Domain + Real-Time Telemetry Dashboard (紅框 2 + 綠框 3 合併) */
+    .combined-top-panel {
       background: var(--panel-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 12px;
-      position: relative;
-    }
-    #knifeCanvas {
-      width: 100%;
-      height: 175px;
-      background: #080d14;
-      border-radius: 8px;
-      display: block;
+      padding: 9px 12px;
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 12px;
+      align-items: stretch;
     }
 
-    /* Telemetry KPI Cards */
-    .telemetry-row {
+    /* Telemetry KPI Grid (Left column) */
+    .telemetry-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(4, 1fr);
+      gap: 6px;
     }
     .kpi-card {
-      background: var(--panel-bg);
+      background: var(--card-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 9px 12px;
+      border-radius: 6px;
+      padding: 4px 8px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-    .kpi-title { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
-    .kpi-value { font-size: 1.15rem; font-weight: 800; font-family: 'Courier New', Courier, monospace; font-variant-numeric: tabular-nums; margin-top: 2px; }
+    .kpi-title { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi-value { font-size: 1.05rem; font-weight: 800; font-family: 'Courier New', Courier, monospace; font-variant-numeric: tabular-nums; margin-top: 1px; }
+
+    /* Physical Animation Panel (Right column) */
+    .knife-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      position: relative;
+    }
+    .knife-header {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .knife-canvas-container {
+      flex: 1;
+      position: relative;
+      min-height: 140px;
+    }
+    #knifeCanvas {
+      width: 100%;
+      height: 100%;
+      min-height: 140px;
+      background: #080d14;
+      border-radius: 6px;
+      display: block;
+    }
 
     /* Oscilloscope Card */
     .scope-card {
       background: var(--panel-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 12px;
+      padding: 10px 12px;
       flex: 1;
       display: flex;
       flex-direction: column;
     }
     #scopeCanvas {
       width: 100%;
-      height: 460px;
+      height: 550px;
       background: #06090e;
       border-radius: 8px;
       display: block;
     }
 
-    /* Alert Banner */
+    /* Alert Banner inside knife-canvas-container */
     .att-banner {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 8px;
+      right: 10px;
       background: rgba(16, 185, 129, 0.95);
       color: #022c22;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.72rem;
       font-weight: 700;
-      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
       display: none;
+      z-index: 10;
       animation: bounce 0.4s ease;
     }
     .stall-banner {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 8px;
+      right: 10px;
       background: rgba(239, 68, 68, 0.95);
       color: #ffffff;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.72rem;
       font-weight: 700;
-      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
       display: none;
+      z-index: 10;
       animation: bounce 0.4s ease;
     }
     @keyframes bounce { 0% { transform: scale(0.8); } 70% { transform: scale(1.05); } 100% { transform: scale(1); } }
@@ -499,56 +529,63 @@
     <!-- Right Main Interactive Area -->
     <div class="display-area">
       
-      <!-- Physical Blade + Tissue Canvas -->
-      <div class="anim-card">
-        <div class="panel-title" style="margin-bottom:6px;">
-          🔬 手術刀咬合組織與壓電換能器動態微觀模擬 (Physical Acoustic Domain)
+      <!-- Combined Physical Domain + Real-Time Telemetry Dashboard (紅框 2 + 綠框 3 合併) -->
+      <div class="combined-top-panel">
+        
+        <!-- Left Column: Real-Time Telemetry Grid (綠框 3) -->
+        <div class="telemetry-grid">
+          <div class="kpi-card">
+            <div class="kpi-title">機械諧振頻率 (Target fs)</div>
+            <div class="kpi-value" id="kpi-fs" style="color:var(--yellow)">55,500 Hz</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">FPGA DDS 輸出頻率 (Drive f)</div>
+            <div class="kpi-value" id="kpi-drivef" style="color:var(--cyan)">55,500 Hz</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">阻抗相位差 (Phase Δφ)</div>
+            <div class="kpi-value" id="kpi-phase" style="color:var(--green)">+0.00 °</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">刀尖位移衝程 (Tip Stroke)</div>
+            <div class="kpi-value" id="kpi-amp" style="color:var(--pink)">65.0 μm</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">DAC 驅動電壓 (Voltage)</div>
+            <div class="kpi-value" id="kpi-dac" style="color:var(--cyan)">40.0 Vrms</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">換能器總電流 (Current)</div>
+            <div class="kpi-value" id="kpi-curr" style="color:var(--green)">0.45 A</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">即時輸出功率 (Active Pwr)</div>
+            <div class="kpi-value" id="kpi-power" style="color:#fb7185">18.0 W</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">等效阻抗 (|Z| Magnitude)</div>
+            <div class="kpi-value" id="kpi-zmag" style="color:var(--purple)">18.0 Ω</div>
+          </div>
         </div>
-        <canvas id="knifeCanvas"></canvas>
-        <div class="att-banner" id="attAlert">✔ ATT TRANSECTION COMPLETE! (組織切斷完成 - 自動降載保護)</div>
-        <div class="stall-banner" id="stallAlert">⚠ ACOUSTIC OVERLOAD / STALL (碰骨失諧保護 - 自動尋頻自愈中)</div>
-      </div>
 
-      <!-- Real-Time Telemetry Bar -->
-      <div class="telemetry-row">
-        <div class="kpi-card">
-          <div class="kpi-title">機械固有諧振頻率 (Target fs)</div>
-          <div class="kpi-value" id="kpi-fs" style="color:var(--yellow)">55,500 Hz</div>
+        <!-- Right Column: Physical Blade + Tissue Canvas (紅框 2) -->
+        <div class="knife-panel">
+          <div class="knife-header">
+            <span>🔬 換能器聲學變幅桿與刀尖運動模擬 (Physical Acoustic Domain)</span>
+          </div>
+          <div class="knife-canvas-container">
+            <canvas id="knifeCanvas"></canvas>
+            <div class="att-banner" id="attAlert">✔ ATT TRANSECTION COMPLETE! (組織切斷完成 - 自動降載保護)</div>
+            <div class="stall-banner" id="stallAlert">⚠ ACOUSTIC OVERLOAD / STALL (碰骨失諧保護 - 自動尋頻自愈中)</div>
+          </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-title">FPGA DDS 輸出頻率 (Drive f)</div>
-          <div class="kpi-value" id="kpi-drivef" style="color:var(--cyan)">55,500 Hz</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">阻抗相位差 (V vs I Phase Δφ)</div>
-          <div class="kpi-value" id="kpi-phase" style="color:var(--green)">+0.00 °</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">刀尖縱向振動振幅 (Tip Stroke)</div>
-          <div class="kpi-value" id="kpi-amp" style="color:var(--pink)">65.0 μm</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">DAC 驅動電壓 (Drive Voltage)</div>
-          <div class="kpi-value" id="kpi-dac" style="color:var(--cyan)">40.0 Vrms</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">驅動總電流 (Total Current)</div>
-          <div class="kpi-value" id="kpi-curr" style="color:var(--green)">0.45 A</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">即時輸出總功率 (Active Power)</div>
-          <div class="kpi-value" id="kpi-power" style="color:#fb7185">18.0 W</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-title">總等效阻抗 (|Z| Magnitude)</div>
-          <div class="kpi-value" id="kpi-zmag" style="color:var(--purple)">18.0 Ω</div>
-        </div>
+
       </div>
 
       <!-- Real-Time Multi-Trace Oscilloscope -->
       <div class="scope-card">
         <div class="panel-title" style="margin-bottom:6px;">
-          📊 閉環即時多通道示波器 (Frequency Tracking, Phase Error, Voltage & Amplitude PI Control)
+          📊 閉環即時多通道示波器 (Frequency Tracking, Phase Error, Voltage, Amplitude & Current Dynamics)
         </div>
         <canvas id="scopeCanvas"></canvas>
       </div>
@@ -994,12 +1031,12 @@
       knifeCtx.scale(dpr, dpr);
       const cw = w / dpr;
       const ch = h / dpr;
-      const midY = ch / 2 + 6;
+      const midY = ch / 2 + 5;
 
       // 1. Handpiece Piezo PZT Stack
-      const pztX = 30;
-      const pztW = 120;
-      const pztH = 64;
+      const pztX = 14;
+      const pztW = 92;
+      const pztH = 54;
       knifeCtx.fillStyle = '#1e293b';
       knifeCtx.strokeStyle = '#475569';
       knifeCtx.lineWidth = 2;
@@ -1008,83 +1045,83 @@
 
       for (let i = 0; i < 4; i++) {
         knifeCtx.fillStyle = (i % 2 === 0) ? '#0284c7' : '#818cf8';
-        knifeCtx.fillRect(pztX + 12 + i * 26, midY - pztH/2 + 6, 16, pztH - 12);
+        knifeCtx.fillRect(pztX + 8 + i * 20, midY - pztH/2 + 5, 13, pztH - 10);
       }
       knifeCtx.fillStyle = '#cbd5e1';
-      knifeCtx.font = 'bold 13px Segoe UI';
-      knifeCtx.fillText('Piezo PZT Stack (4 Rings)', pztX + 2, midY - pztH/2 - 8);
+      knifeCtx.font = 'bold 11px Segoe UI';
+      knifeCtx.fillText('Piezo Stack', pztX + 4, midY - pztH/2 - 6);
 
       // 2. Titanium Waveguide Horn
       const hornStart = pztX + pztW;
-      const hornEnd = cw - 270;
+      const hornEnd = cw - 175;
       knifeCtx.fillStyle = '#64748b';
       knifeCtx.strokeStyle = '#94a3b8';
       knifeCtx.beginPath();
-      knifeCtx.moveTo(hornStart, midY - 24);
-      knifeCtx.lineTo(hornEnd, midY - 8);
-      knifeCtx.lineTo(hornEnd, midY + 8);
-      knifeCtx.lineTo(hornStart, midY + 24);
+      knifeCtx.moveTo(hornStart, midY - 20);
+      knifeCtx.lineTo(hornEnd, midY - 7);
+      knifeCtx.lineTo(hornEnd, midY + 7);
+      knifeCtx.lineTo(hornStart, midY + 20);
       knifeCtx.closePath();
       knifeCtx.fill();
       knifeCtx.stroke();
       knifeCtx.fillStyle = '#f1f5f9';
-      knifeCtx.font = 'bold 13px Segoe UI';
-      knifeCtx.fillText('Titanium Waveguide (Acoustic Velocity Transformer)', (hornStart + hornEnd)/2 - 150, midY - 18);
+      knifeCtx.font = 'bold 11px Segoe UI';
+      knifeCtx.fillText('Titanium Waveguide (λ/2 Horn)', (hornStart + hornEnd)/2 - 75, midY - 12);
 
       // 3. Blade Tip Vibration
       const vib = FPGA.powerActive ? (Math.sin(simTime * 35.0) * (Physics.amplitude_um / 12.0)) : 0.0;
       const tipX = hornEnd;
-      const tipLen = 70 + vib;
+      const tipLen = 50 + vib;
       knifeCtx.fillStyle = '#e2e8f0';
       knifeCtx.strokeStyle = '#00f0ff';
       knifeCtx.lineWidth = 2;
       knifeCtx.beginPath();
-      knifeCtx.moveTo(tipX, midY - 7);
+      knifeCtx.moveTo(tipX, midY - 6);
       knifeCtx.lineTo(tipX + tipLen, midY - 2);
-      knifeCtx.lineTo(tipX + tipLen + 10, midY);
+      knifeCtx.lineTo(tipX + tipLen + 8, midY);
       knifeCtx.lineTo(tipX + tipLen, midY + 2);
-      knifeCtx.lineTo(tipX, midY + 7);
+      knifeCtx.lineTo(tipX, midY + 6);
       knifeCtx.closePath();
       knifeCtx.fill();
       knifeCtx.stroke();
 
       // 4. Teflon Clamp Pad
-      const clampGap = Math.max(5, 36 * (1.0 - Physics.clampPressure));
-      const padY = midY - clampGap - 14;
+      const clampGap = Math.max(4, 30 * (1.0 - Physics.clampPressure));
+      const padY = midY - clampGap - 12;
       knifeCtx.fillStyle = '#f8fafc';
       knifeCtx.strokeStyle = '#cbd5e1';
-      knifeCtx.fillRect(tipX + 5, padY, 70, 10);
-      knifeCtx.strokeRect(tipX + 5, padY, 70, 10);
+      knifeCtx.fillRect(tipX + 4, padY, 52, 9);
+      knifeCtx.strokeRect(tipX + 4, padY, 52, 9);
       knifeCtx.fillStyle = '#ffffff';
-      knifeCtx.font = 'bold 12px Segoe UI';
-      knifeCtx.fillText('PTFE Pad', tipX + 10, padY - 6);
+      knifeCtx.font = 'bold 10px Segoe UI';
+      knifeCtx.fillText('PTFE Pad', tipX + 6, padY - 4);
 
       // 5. Human Tissue
       if (Physics.clampPressure > 0.04) {
         const tissueH = Math.max(3, clampGap + 2);
         knifeCtx.fillStyle = Physics.tissueDamping > 50 ? '#dc2626' : '#f87171';
         knifeCtx.beginPath();
-        knifeCtx.ellipse(tipX + 38, midY - tissueH/2 + 2, 28, tissueH/2 + 2, 0, 0, Math.PI * 2);
+        knifeCtx.ellipse(tipX + 26, midY - tissueH/2 + 2, 20, tissueH/2 + 2, 0, 0, Math.PI * 2);
         knifeCtx.fill();
 
         if (FPGA.powerActive && Physics.active_power_w > 15) {
           knifeCtx.fillStyle = 'rgba(224, 242, 254, 0.8)';
-          for (let b = 0; b < 5; b++) {
-            const bx = tipX + 15 + b * 11 + Math.sin(simTime * 8 + b) * 4;
-            const by = midY - 18 - b * 7;
+          for (let b = 0; b < 4; b++) {
+            const bx = tipX + 10 + b * 9 + Math.sin(simTime * 8 + b) * 3;
+            const by = midY - 15 - b * 6;
             knifeCtx.beginPath();
-            knifeCtx.arc(bx, by, 2.5, 0, Math.PI * 2);
+            knifeCtx.arc(bx, by, 2, 0, Math.PI * 2);
             knifeCtx.fill();
           }
           knifeCtx.fillStyle = '#38bdf8';
-          knifeCtx.font = 'bold italic 13px Segoe UI';
-          knifeCtx.fillText('Cavitation Vapor', tipX + 16, midY - 42);
+          knifeCtx.font = 'bold italic 11px Segoe UI';
+          knifeCtx.fillText('Cavitation', tipX + 8, midY - 30);
         }
       }
 
       knifeCtx.fillStyle = '#00f0ff';
-      knifeCtx.font = 'bold 14px Segoe UI';
-      knifeCtx.fillText(`↔ Tip Stroke: ${Physics.amplitude_um.toFixed(1)} μm pk-pk`, tipX + 92, midY + 6);
+      knifeCtx.font = 'bold 12.5px Segoe UI';
+      knifeCtx.fillText(`↔ ${Physics.amplitude_um.toFixed(1)} μm`, tipX + 62, midY + 5);
 
       knifeCtx.restore();
     }
@@ -1104,7 +1141,7 @@
       const marginL = 76;
       const marginR = 24;
       const plotW = cw - marginL - marginR;
-      const legendX = Math.max(marginL + plotW - 390, cw - 410);
+      const legendX = Math.max(marginL + plotW - 400, cw - 420);
 
       // Scope 1: Frequency Tracking (54.0 kHz ~ 57.0 kHz)
       drawSubScopeFrame(scopeCtx, marginL, 10, plotW, subH - 18, 
@@ -1139,21 +1176,48 @@
       scopeCtx.fillStyle = '#c084fc';
       scopeCtx.fillText('— 相位差 Δφ (0° 意味純電阻性，轉換效率最高)', legendX, y2 + 30);
 
-      // Scope 3: Power Regulation
+      // Scope 3: Power & Dynamic Response (DAC Voltage, Tip Amplitude & Current)
       const y3 = subH * 2 - 2;
       drawSubScopeFrame(scopeCtx, marginL, y3, plotW, subH - 18, 
-        'CH3: 恆定振幅控制閉環 (DAC 驅動電壓 Vrms & 刀尖機械位移振幅 μm)', '160 V / μm', '0');
+        'CH3: 系統能量閉環與動態響應 (DAC 驅動電壓 Vrms, 刀尖機械位移振幅 μm & 換能器總電流 A)', '160 V / μm', '0');
 
+      // Trace 1: DAC Voltage (Yellow, 0-160V)
       drawTrace(scopeCtx, history.dac_v, marginL, y3, plotW, subH - 18, 0, 160, '#f59e0b', []);
+      // Trace 2: Tip Amplitude (Pink, 0-120um)
       drawTrace(scopeCtx, history.amplitude, marginL, y3, plotW, subH - 18, 0, 120, '#ec4899', []);
+      // Trace 3: Motional Current (Green, 0-2.5A mapped to 0-160 scale)
+      drawScaledTrace(scopeCtx, history.itot, marginL, y3, plotW, subH - 18, 0, 2.5, 0, 160, '#10b981', []);
 
       scopeCtx.font = 'bold 12.5px Segoe UI';
       scopeCtx.fillStyle = '#f59e0b';
-      scopeCtx.fillText('— DAC 驅動電壓 (Vrms)', legendX, y3 + 30);
+      scopeCtx.fillText('— DAC 驅動電壓 (Vrms)', legendX, y3 + 26);
       scopeCtx.fillStyle = '#f472b6';
-      scopeCtx.fillText('— 刀尖機械位移振幅 (μm pk-pk)', legendX, y3 + 50);
+      scopeCtx.fillText('— 刀尖機械位移振幅 (μm pk-pk)', legendX, y3 + 44);
+      scopeCtx.fillStyle = '#10b981';
+      scopeCtx.fillText('— 換能器總電流 (Total Current, 滿格 2.5 A)', legendX, y3 + 62);
 
       scopeCtx.restore();
+    }
+
+    function drawScaledTrace(ctx, dataArr, x, y, w, h, dataMin, dataMax, plotMin, plotMax, color, dash) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash(dash || []);
+      ctx.beginPath();
+
+      const span = plotMax - plotMin;
+      const dataSpan = dataMax - dataMin;
+      for (let i = 0; i < BUF_LEN; i++) {
+        const px = x + (i / (BUF_LEN - 1)) * w;
+        const norm = (dataArr[i] - dataMin) / dataSpan;
+        const val = plotMin + norm * span;
+        const clampedVal = Math.max(plotMin, Math.min(plotMax, val));
+        const py = (y + h) - ((clampedVal - plotMin) / span) * h;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     function drawSubScopeFrame(ctx, x, y, w, h, title, maxLabel, minLabel) {

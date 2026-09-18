@@ -54,3 +54,6 @@ python ultrasonic_surgical_sim.py
 深入了解壓電換能器數理推導、BVD 網絡推導、閉環穩定性分析與保護邏輯，請參閱：
 👉 **[SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md)**
 
+查看歷次使用者需求 Prompt 與程式碼改進詳細紀錄：
+👉 **[DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md)**
+
