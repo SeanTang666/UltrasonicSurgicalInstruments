@@ -317,7 +317,7 @@
       display: block;
     }
 
-    /* Oscilloscope Card */
+    /* Oscilloscope Card & Toolbar */
     .scope-card {
       background: var(--panel-bg);
       border: 1px solid var(--border-color);
@@ -327,9 +327,65 @@
       display: flex;
       flex-direction: column;
     }
+    .scope-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+    }
+    .timebase-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .tb-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+    .tb-buttons {
+      display: flex;
+      gap: 4px;
+    }
+    .btn-tb {
+      background: #1e293b;
+      color: var(--text-dim);
+      border: 1px solid var(--border-color);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-tb:hover {
+      background: #334155;
+      color: white;
+    }
+    .btn-tb.active {
+      background: var(--cyan);
+      color: #04101c;
+      border-color: var(--cyan);
+      font-weight: 800;
+    }
+    .tb-info {
+      font-size: 0.72rem;
+      color: var(--cyan);
+      font-family: monospace;
+      font-weight: 700;
+      margin-left: 2px;
+    }
     #scopeCanvas {
       width: 100%;
-      height: 550px;
+      height: 640px;
       background: #06090e;
       border-radius: 8px;
       display: block;
@@ -584,8 +640,21 @@
 
       <!-- Real-Time Multi-Trace Oscilloscope -->
       <div class="scope-card">
-        <div class="panel-title" style="margin-bottom:6px;">
-          📊 閉環即時多通道示波器 (Frequency Tracking, Phase Error, Voltage, Amplitude & Current Dynamics)
+        <div class="scope-toolbar">
+          <div class="panel-title" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+            📊 閉環即時多通道示波器 (Dual-Axis Tracking & Multi-Channel Power DSO)
+          </div>
+          <div class="timebase-controls">
+            <span class="tb-label">⏱ 水平時基 (Timebase):</span>
+            <div class="tb-buttons" id="tbButtons">
+              <button class="btn-tb" data-time="0.5">0.5s</button>
+              <button class="btn-tb" data-time="1.0">1.0s</button>
+              <button class="btn-tb" data-time="2.5">2.5s</button>
+              <button class="btn-tb active" data-time="5.0">5.0s</button>
+              <button class="btn-tb" data-time="10.0">10.0s</button>
+            </div>
+            <span class="tb-info" id="tbInfoText">500 ms/div</span>
+          </div>
         </div>
         <canvas id="scopeCanvas"></canvas>
       </div>
@@ -774,23 +843,24 @@
     };
 
     // -------------------------------------------------------------
-    // History Buffers
+    // History Buffers & Horizontal Timebase Control
     // -------------------------------------------------------------
-    const BUF_LEN = 200;
+    const MAX_BUF_LEN = 600;
     const history = {
-      time: new Array(BUF_LEN).fill(0),
-      fs_target: new Array(BUF_LEN).fill(55500),
-      drive_f: new Array(BUF_LEN).fill(55500),
-      phase: new Array(BUF_LEN).fill(0),
-      dac_v: new Array(BUF_LEN).fill(40),
-      amplitude: new Array(BUF_LEN).fill(65),
-      itot: new Array(BUF_LEN).fill(0.45),
-      zmag: new Array(BUF_LEN).fill(18)
+      time: new Array(MAX_BUF_LEN).fill(0),
+      fs_target: new Array(MAX_BUF_LEN).fill(55500),
+      drive_f: new Array(MAX_BUF_LEN).fill(55500),
+      phase: new Array(MAX_BUF_LEN).fill(0),
+      dac_v: new Array(MAX_BUF_LEN).fill(40),
+      amplitude: new Array(MAX_BUF_LEN).fill(65),
+      itot: new Array(MAX_BUF_LEN).fill(0.45),
+      zmag: new Array(MAX_BUF_LEN).fill(18)
     };
 
     let simTime = 0.0;
     let scenario = "manual";
     let scenTimer = 0.0;
+    let currentWindowSec = 5.0;
 
     // -------------------------------------------------------------
     // DOM Elements & Event Listeners
@@ -799,6 +869,25 @@
     const btnHeaderSweep = document.getElementById('btnHeaderSweep');
     const liveBadge = document.getElementById('liveBadge');
     const liveBadgeText = document.getElementById('liveBadgeText');
+
+    const tbButtons = document.querySelectorAll('.btn-tb');
+    const tbInfoText = document.getElementById('tbInfoText');
+    const tbDivMap = {
+      0.5: '50 ms/div',
+      1.0: '100 ms/div',
+      2.5: '250 ms/div',
+      5.0: '500 ms/div',
+      10.0: '1.0 s/div'
+    };
+
+    tbButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tbButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentWindowSec = parseFloat(btn.dataset.time);
+        tbInfoText.textContent = tbDivMap[currentWindowSec] || `${(currentWindowSec/10).toFixed(2)} s/div`;
+      });
+    });
 
     const pwrSlider = document.getElementById('pwrSlider');
     const pwrLevelDisp = document.getElementById('pwrLevelDisp');
@@ -1137,116 +1226,225 @@
       const cw = w / dpr;
       const ch = h / dpr;
 
-      const subH = ch / 3;
-      const marginL = 76;
-      const marginR = 24;
+      const marginL = 82;
+      const marginR = 64;
       const plotW = cw - marginL - marginR;
-      const legendX = Math.max(marginL + plotW - 400, cw - 420);
 
-      // Scope 1: Frequency Tracking (54.0 kHz ~ 57.0 kHz)
-      drawSubScopeFrame(scopeCtx, marginL, 10, plotW, subH - 18, 
-        'CH1: 共振頻率追蹤 (Target fs vs FPGA DDS Driving Frequency)', '57.0 kHz', '54.0 kHz');
-      
-      const fMin = 54000, fMax = 57000;
-      drawTrace(scopeCtx, history.fs_target, marginL, 10, plotW, subH - 18, fMin, fMax, '#f59e0b', [4, 3]);
-      drawTrace(scopeCtx, history.drive_f, marginL, 10, plotW, subH - 18, fMin, fMax, '#00f0ff', []);
-      
-      scopeCtx.font = 'bold 12.5px Segoe UI';
-      scopeCtx.fillStyle = '#f59e0b';
-      scopeCtx.fillText('-- 刀尖固有諧振頻率 (Target fs, 含組織與溫漂)', legendX, 30);
-      scopeCtx.fillStyle = '#00f0ff';
-      scopeCtx.fillText('— FPGA DDS 輸出驅動頻率 (Drive f)', legendX, 50);
+      const topPad = 7;
+      const bottomPad = 22;
+      const gap = 7;
+      const subH = Math.floor((ch - topPad - bottomPad - gap * 3) / 4);
 
-      // Scope 2: Phase Angle Difference (-50° ~ +50°)
-      const y2 = subH + 4;
-      drawSubScopeFrame(scopeCtx, marginL, y2, plotW, subH - 18, 
-        'CH2: 阻抗相位差 (V vs I Phase Angle - 目標 0° 串聯諧振)', '+50°', '-50°');
-      
-      scopeCtx.strokeStyle = '#334155';
+      const y1 = topPad;
+      const y2 = y1 + subH + gap;
+      const y3 = y2 + subH + gap;
+      const y4 = y3 + subH + gap;
+
+      // -------------------------------------------------------------
+      // Scope 1: CH1 (Dual-Axis: Left Freq 54~57 kHz, Right Phase -50°~+50°)
+      // -------------------------------------------------------------
+      const leftLabels1 = [
+        { posNorm: 1.0, text: '57.0 kHz', color: '#38bdf8' },
+        { posNorm: 0.5, text: '55.5 kHz', color: '#38bdf8' },
+        { posNorm: 0.0, text: '54.0 kHz', color: '#38bdf8' }
+      ];
+      const rightLabels1 = [
+        { posNorm: 1.0, text: '+50°', color: '#c084fc' },
+        { posNorm: 0.5, text: '0° 諧振', color: '#4ade80' },
+        { posNorm: 0.0, text: '-50°', color: '#c084fc' }
+      ];
+      drawDsoFrame(scopeCtx, marginL, y1, plotW, subH, 'CH1: 雙軸頻率追蹤與阻抗相位差 (Left: Freq 54~57 kHz | Right: Phase -50°~+50°)', leftLabels1, rightLabels1);
+
+      // 0° Resonance Target Line
+      scopeCtx.strokeStyle = '#10b981';
       scopeCtx.lineWidth = 1;
-      scopeCtx.setLineDash([2, 4]);
+      scopeCtx.setLineDash([3, 3]);
       scopeCtx.beginPath();
-      scopeCtx.moveTo(marginL, y2 + (subH - 18)/2);
-      scopeCtx.lineTo(marginL + plotW, y2 + (subH - 18)/2);
+      scopeCtx.moveTo(marginL, y1 + subH / 2);
+      scopeCtx.lineTo(marginL + plotW, y1 + subH / 2);
       scopeCtx.stroke();
       scopeCtx.setLineDash([]);
 
-      drawTrace(scopeCtx, history.phase, marginL, y2, plotW, subH - 18, -50, 50, '#a855f7', []);
-      scopeCtx.font = 'bold 12.5px Segoe UI';
-      scopeCtx.fillStyle = '#c084fc';
-      scopeCtx.fillText('— 相位差 Δφ (0° 意味純電阻性，轉換效率最高)', legendX, y2 + 30);
+      // Traces for Scope 1
+      drawWindowTrace(scopeCtx, history.fs_target, marginL, y1, plotW, subH, 54000, 57000, '#f59e0b', [4, 3], currentWindowSec, dt);
+      drawWindowTrace(scopeCtx, history.drive_f, marginL, y1, plotW, subH, 54000, 57000, '#00f0ff', [], currentWindowSec, dt);
+      drawWindowTrace(scopeCtx, history.phase, marginL, y1, plotW, subH, -50, 50, '#c084fc', [], currentWindowSec, dt);
 
-      // Scope 3: Power & Dynamic Response (DAC Voltage, Tip Amplitude & Current)
-      const y3 = subH * 2 - 2;
-      drawSubScopeFrame(scopeCtx, marginL, y3, plotW, subH - 18, 
-        'CH3: 系統能量閉環與動態響應 (DAC 驅動電壓 Vrms, 刀尖機械位移振幅 μm & 換能器總電流 A)', '160 V / μm', '0');
-
-      // Trace 1: DAC Voltage (Yellow, 0-160V)
-      drawTrace(scopeCtx, history.dac_v, marginL, y3, plotW, subH - 18, 0, 160, '#f59e0b', []);
-      // Trace 2: Tip Amplitude (Pink, 0-120um)
-      drawTrace(scopeCtx, history.amplitude, marginL, y3, plotW, subH - 18, 0, 120, '#ec4899', []);
-      // Trace 3: Motional Current (Green, 0-2.5A mapped to 0-160 scale)
-      drawScaledTrace(scopeCtx, history.itot, marginL, y3, plotW, subH - 18, 0, 2.5, 0, 160, '#10b981', []);
-
-      scopeCtx.font = 'bold 12.5px Segoe UI';
+      // Scope 1 Top-Right Readouts
+      scopeCtx.font = 'bold 11.5px Segoe UI';
+      scopeCtx.textAlign = 'right';
       scopeCtx.fillStyle = '#f59e0b';
-      scopeCtx.fillText('— DAC 驅動電壓 (Vrms)', legendX, y3 + 26);
+      scopeCtx.fillText(`-- Target: ${Physics.fs.toFixed(0)} Hz`, marginL + plotW - 275, y1 + 16);
+      scopeCtx.fillStyle = '#00f0ff';
+      scopeCtx.fillText(`— Drive: ${FPGA.driveFreq.toFixed(0)} Hz`, marginL + plotW - 135, y1 + 16);
+      scopeCtx.fillStyle = '#c084fc';
+      const phaseStr = FPGA.powerActive ? `— Δφ: ${Physics.phase_deg >= 0 ? '+' : ''}${Physics.phase_deg.toFixed(2)}°` : '— Δφ: STANDBY';
+      scopeCtx.fillText(phaseStr, marginL + plotW - 10, y1 + 16);
+      scopeCtx.textAlign = 'left';
+
+      // -------------------------------------------------------------
+      // Scope 2: CH2 (DAC 驅動電壓: 0 ~ 160 Vrms)
+      // -------------------------------------------------------------
+      const leftLabels2 = [
+        { posNorm: 1.0, text: '160 V', color: '#f59e0b' },
+        { posNorm: 0.5, text: '80 V', color: '#f59e0b' },
+        { posNorm: 0.0, text: '0 V', color: '#f59e0b' }
+      ];
+      drawDsoFrame(scopeCtx, marginL, y2, plotW, subH, 'CH2: 換能器驅動電壓 (DAC Voltage Vrms)', leftLabels2, null);
+      drawWindowTrace(scopeCtx, history.dac_v, marginL, y2, plotW, subH, 0, 160, '#f59e0b', [], currentWindowSec, dt);
+
+      // Scope 2 Readout
+      scopeCtx.font = 'bold 11.5px Segoe UI';
+      scopeCtx.textAlign = 'right';
+      scopeCtx.fillStyle = '#f59e0b';
+      scopeCtx.fillText(`— 即時驅動電壓: ${FPGA.powerActive ? FPGA.dacVrms.toFixed(1) : '0.0'} Vrms`, marginL + plotW - 10, y2 + 16);
+      scopeCtx.textAlign = 'left';
+
+      // -------------------------------------------------------------
+      // Scope 3: CH3 (刀尖機械位移衝程振幅: 0 ~ 120 μm)
+      // -------------------------------------------------------------
+      const leftLabels3 = [
+        { posNorm: 1.0, text: '120 μm', color: '#ec4899' },
+        { posNorm: 0.5, text: '60 μm', color: '#ec4899' },
+        { posNorm: 0.0, text: '0 μm', color: '#ec4899' }
+      ];
+      drawDsoFrame(scopeCtx, marginL, y3, plotW, subH, 'CH3: 刀尖機械位移衝程振幅 (Tip Stroke Amplitude μm pk-pk)', leftLabels3, null);
+
+      // Target Amplitude Reference Line
+      if (FPGA.targetAmplitude > 0) {
+        const targetY = (y3 + subH) - (FPGA.targetAmplitude / 120.0) * subH;
+        scopeCtx.strokeStyle = 'rgba(244, 114, 182, 0.4)';
+        scopeCtx.lineWidth = 1;
+        scopeCtx.setLineDash([3, 3]);
+        scopeCtx.beginPath();
+        scopeCtx.moveTo(marginL, targetY);
+        scopeCtx.lineTo(marginL + plotW, targetY);
+        scopeCtx.stroke();
+        scopeCtx.setLineDash([]);
+      }
+
+      drawWindowTrace(scopeCtx, history.amplitude, marginL, y3, plotW, subH, 0, 120, '#ec4899', [], currentWindowSec, dt);
+
+      // Scope 3 Readout
+      scopeCtx.font = 'bold 11.5px Segoe UI';
+      scopeCtx.textAlign = 'right';
       scopeCtx.fillStyle = '#f472b6';
-      scopeCtx.fillText('— 刀尖機械位移振幅 (μm pk-pk)', legendX, y3 + 44);
+      scopeCtx.fillText(`— 刀尖衝程: ${FPGA.powerActive ? Physics.amplitude_um.toFixed(1) : '0.0'} μm (目標設定: ${FPGA.targetAmplitude} μm)`, marginL + plotW - 10, y3 + 16);
+      scopeCtx.textAlign = 'left';
+
+      // -------------------------------------------------------------
+      // Scope 4: CH4 (換能器總電流: 0 ~ 2.50 A)
+      // -------------------------------------------------------------
+      const leftLabels4 = [
+        { posNorm: 1.0, text: '2.50 A', color: '#10b981' },
+        { posNorm: 0.5, text: '1.25 A', color: '#10b981' },
+        { posNorm: 0.0, text: '0.00 A', color: '#10b981' }
+      ];
+      drawDsoFrame(scopeCtx, marginL, y4, plotW, subH, 'CH4: 換能器總驅動電流 (Total Motional + Parallel Current A_rms)', leftLabels4, null);
+      drawWindowTrace(scopeCtx, history.itot, marginL, y4, plotW, subH, 0.0, 2.5, '#10b981', [], currentWindowSec, dt);
+
+      // Scope 4 Readout
+      scopeCtx.font = 'bold 11.5px Segoe UI';
+      scopeCtx.textAlign = 'right';
       scopeCtx.fillStyle = '#10b981';
-      scopeCtx.fillText('— 換能器總電流 (Total Current, 滿格 2.5 A)', legendX, y3 + 62);
+      scopeCtx.fillText(`— 總電流: ${FPGA.powerActive ? Physics.itot_rms.toFixed(2) : '0.00'} A (等效阻抗 |Z|: ${Physics.impedance_mag.toFixed(1)} Ω)`, marginL + plotW - 10, y4 + 16);
+      scopeCtx.textAlign = 'left';
+
+      // -------------------------------------------------------------
+      // Bottom Horizontal Time Scale (10-div Markers)
+      // -------------------------------------------------------------
+      const timeAxisY = y4 + subH + 15;
+      scopeCtx.font = 'bold 10.5px monospace';
+      scopeCtx.fillStyle = '#64748b';
+      scopeCtx.textAlign = 'center';
+      for (let div = 0; div <= 10; div += 2) {
+        const tx = marginL + (div / 10) * plotW;
+        const tVal = -currentWindowSec * (1.0 - div / 10);
+        const tStr = div === 10 ? '0.0s (Now)' : `${tVal.toFixed(1)}s`;
+        scopeCtx.fillText(tStr, tx, timeAxisY);
+      }
+
+      scopeCtx.fillStyle = '#38bdf8';
+      scopeCtx.font = 'bold 11px Segoe UI';
+      scopeCtx.fillText(`◀ 水平時間軸 (Timebase: ${(currentWindowSec / 10 * 1000).toFixed(0)} ms/div, 視窗總長: ${currentWindowSec.toFixed(1)}s) ▶`, marginL + plotW / 2, timeAxisY);
+      scopeCtx.textAlign = 'left';
 
       scopeCtx.restore();
     }
 
-    function drawScaledTrace(ctx, dataArr, x, y, w, h, dataMin, dataMax, plotMin, plotMax, color, dash) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.setLineDash(dash || []);
-      ctx.beginPath();
-
-      const span = plotMax - plotMin;
-      const dataSpan = dataMax - dataMin;
-      for (let i = 0; i < BUF_LEN; i++) {
-        const px = x + (i / (BUF_LEN - 1)) * w;
-        const norm = (dataArr[i] - dataMin) / dataSpan;
-        const val = plotMin + norm * span;
-        const clampedVal = Math.max(plotMin, Math.min(plotMax, val));
-        const py = (y + h) - ((clampedVal - plotMin) / span) * h;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    function drawSubScopeFrame(ctx, x, y, w, h, title, maxLabel, minLabel) {
-      ctx.fillStyle = '#06090e';
+    function drawDsoFrame(ctx, x, y, w, h, title, leftLabels, rightLabels) {
+      // Dark oscilloscope display container
+      ctx.fillStyle = '#070c14';
       ctx.fillRect(x, y, w, h);
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 1;
       ctx.strokeRect(x, y, w, h);
 
-      ctx.fillStyle = '#f1f5f9';
-      ctx.font = 'bold 13.5px Segoe UI';
-      ctx.fillText(title, x + 12, y + 20);
+      // DSO Graticule Grid: 10 horizontal divisions (11 vertical grid lines)
+      ctx.strokeStyle = '#141d2c';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      for (let div = 1; div < 10; div++) {
+        const gx = x + (div / 10) * w;
+        ctx.beginPath();
+        ctx.moveTo(gx, y);
+        ctx.lineTo(gx, y + h);
+        ctx.stroke();
+      }
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 11.5px monospace';
-      ctx.fillText(maxLabel, x - 70, y + 14);
-      ctx.fillText(minLabel, x - 70, y + h - 4);
+      // 4 vertical divisions (3 intermediate horizontal grid lines)
+      for (let vdiv = 1; vdiv < 4; vdiv++) {
+        const gy = y + (vdiv / 4) * h;
+        ctx.beginPath();
+        ctx.moveTo(x, gy);
+        ctx.lineTo(x + w, gy);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // Channel Title
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 12.5px Segoe UI';
+      ctx.fillText(title, x + 10, y + 17);
+
+      // Left Y-Axis Labels
+      if (leftLabels && leftLabels.length > 0) {
+        ctx.font = 'bold 11px monospace';
+        leftLabels.forEach(lbl => {
+          ctx.fillStyle = lbl.color || '#94a3b8';
+          const ly = y + h - (lbl.posNorm * h);
+          ctx.textAlign = 'right';
+          ctx.fillText(lbl.text, x - 8, Math.min(y + h - 3, Math.max(y + 11, ly + 4)));
+        });
+        ctx.textAlign = 'left';
+      }
+
+      // Right Y-Axis Labels
+      if (rightLabels && rightLabels.length > 0) {
+        ctx.font = 'bold 11px monospace';
+        rightLabels.forEach(lbl => {
+          ctx.fillStyle = lbl.color || '#94a3b8';
+          const ry = y + h - (lbl.posNorm * h);
+          ctx.textAlign = 'left';
+          ctx.fillText(lbl.text, x + w + 8, Math.min(y + h - 3, Math.max(y + 11, ry + 4)));
+        });
+        ctx.textAlign = 'left';
+      }
     }
 
-    function drawTrace(ctx, dataArr, x, y, w, h, minVal, maxVal, color, dash) {
+    function drawWindowTrace(ctx, dataArr, x, y, w, h, minVal, maxVal, color, dash, winSec, dtStep) {
+      const nPts = Math.min(MAX_BUF_LEN, Math.max(10, Math.round(winSec / dtStep)));
+      const startIdx = MAX_BUF_LEN - nPts;
+      const span = maxVal - minVal;
+
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
-      ctx.setLineDash(dash);
+      ctx.setLineDash(dash || []);
       ctx.beginPath();
 
-      const span = maxVal - minVal;
-      for (let i = 0; i < BUF_LEN; i++) {
-        const px = x + (i / (BUF_LEN - 1)) * w;
-        const val = Math.max(minVal, Math.min(maxVal, dataArr[i]));
+      for (let i = 0; i < nPts; i++) {
+        const px = x + (i / (nPts - 1)) * w;
+        const val = Math.max(minVal, Math.min(maxVal, dataArr[startIdx + i]));
         const py = (y + h) - ((val - minVal) / span) * h;
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);

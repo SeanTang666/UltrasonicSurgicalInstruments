@@ -740,74 +740,94 @@ class UltrasonicSimulatorApp:
         if w < 100: w = 800
         if h < 100: h = 400
 
-        n_plots = 3
-        margin_top = 10
-        margin_bottom = 25
+        n_plots = 4
+        margin_top = 8
+        margin_bottom = 20
         plot_h = (h - margin_top - margin_bottom) / n_plots
+        x_left = 68
+        x_right = w - 48
 
-        # Scope 1: Frequency Tracking (54.0 kHz to 57.0 kHz)
+        # Scope 1: Dual-Axis Freq (Left: 54~57 kHz) & Phase (Right: -50°~+50°)
         y0_1 = margin_top
-        y1_1 = y0_1 + plot_h - 10
-        self.draw_subscope_frame(cv, 65, y0_1, w - 20, y1_1, "Scope 1: Frequency Resonance Tracking (FPGA DDS vs Mechanical fs)", "57.0 kHz", "54.0 kHz")
+        y1_1 = y0_1 + plot_h - 8
+        self.draw_subscope_frame(cv, x_left, y0_1, x_right, y1_1, 
+                                "CH1: 雙軸頻率追蹤與相位差 (Left: Freq 54~57 kHz | Right: Phase -50°~+50°)", 
+                                "57.0k", "54.0k", right_max="+50°", right_min="-50°")
         
+        # 0° Resonance line
+        y_zero1 = (y0_1 + y1_1) / 2
+        cv.create_line(x_left, y_zero1, x_right, y_zero1, fill="#059669", width=1, dash=(3, 3))
+        cv.create_text(x_right + 6, y_zero1, text="0°", fill="#34d399", font=("Segoe UI", 7, "bold"), anchor=tk.W)
+
         pts_target_fs = []
         pts_drive_f = []
+        pts_phase = []
         f_min, f_max = 54000.0, 57000.0
         for i in range(self.buf_size):
-            x = 65 + (i / (self.buf_size - 1)) * (w - 85)
+            x = x_left + (i / (self.buf_size - 1)) * (x_right - x_left)
             y_tgt = y1_1 - ((self.fs_target_buf[i] - f_min) / (f_max - f_min)) * (y1_1 - y0_1)
             y_drv = y1_1 - ((self.freq_buf[i] - f_min) / (f_max - f_min)) * (y1_1 - y0_1)
+            deg = self.phase_buf[i]
+            y_p = y_zero1 - (deg / 50.0) * ((y1_1 - y0_1) / 2)
             pts_target_fs.extend([x, max(y0_1, min(y1_1, y_tgt))])
             pts_drive_f.extend([x, max(y0_1, min(y1_1, y_drv))])
+            pts_phase.extend([x, max(y0_1, min(y1_1, y_p))])
         
         cv.create_line(pts_target_fs, fill="#fbbf24", width=2, dash=(4, 2))
         cv.create_line(pts_drive_f, fill="#00e5ff", width=2)
-        cv.create_text(w - 290, y0_1 + 14, text="-- Target fs (Tissue/Temp Drift)", fill="#fbbf24", font=("Segoe UI", 9, "bold"), anchor=tk.W)
-        cv.create_text(w - 290, y0_1 + 28, text="— FPGA DDS Driving Freq", fill="#00e5ff", font=("Segoe UI", 9, "bold"), anchor=tk.W)
+        cv.create_line(pts_phase, fill="#c084fc", width=2)
+        cv.create_text(x_right - 280, y0_1 + 10, text="-- Target fs", fill="#fbbf24", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+        cv.create_text(x_right - 190, y0_1 + 10, text="— Drive f", fill="#00e5ff", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+        cv.create_text(x_right - 105, y0_1 + 10, text="— 相位 Δφ", fill="#c084fc", font=("Segoe UI", 8, "bold"), anchor=tk.W)
 
-        # Scope 2: Phase Difference (-50 deg to +50 deg)
-        y0_2 = y1_1 + 10
-        y1_2 = y0_2 + plot_h - 10
-        self.draw_subscope_frame(cv, 65, y0_2, w - 20, y1_2, "Scope 2: Impedance Phase Error (V vs I Phase Angle - Target = 0° Resonance)", "+50°", "-50°")
-        
-        y_zero = (y0_2 + y1_2) / 2
-        cv.create_line(65, y_zero, w - 20, y_zero, fill="#334155", width=1, dash=(2, 2))
-
-        pts_phase = []
-        for i in range(self.buf_size):
-            x = 65 + (i / (self.buf_size - 1)) * (w - 85)
-            deg = self.phase_buf[i]
-            y_p = y_zero - (deg / 50.0) * ((y1_2 - y0_2) / 2)
-            pts_phase.extend([x, max(y0_2, min(y1_2, y_p))])
-        
-        cv.create_line(pts_phase, fill="#a855f7", width=2)
-        cv.create_text(w - 270, y0_2 + 14, text="— Phase Angle (0° = Resonance)", fill="#a855f7", font=("Segoe UI", 9, "bold"), anchor=tk.W)
-
-        # Scope 3: DAC Voltage Command & Blade Amplitude
-        y0_3 = y1_2 + 10
-        y1_3 = y0_3 + plot_h - 10
-        self.draw_subscope_frame(cv, 65, y0_3, w - 20, y1_3, "Scope 3: Power Regulation (DAC Drive Voltage Vrms & Blade Displacement Amplitude μm)", "160V/μm", "0")
-
+        # Scope 2: DAC Voltage Command (0 ~ 160 Vrms)
+        y0_2 = y1_1 + 8
+        y1_2 = y0_2 + plot_h - 8
+        self.draw_subscope_frame(cv, x_left, y0_2, x_right, y1_2, "CH2: 換能器驅動電壓 (DAC Voltage Vrms)", "160V", "0V")
         pts_dac = []
+        for i in range(self.buf_size):
+            x = x_left + (i / (self.buf_size - 1)) * (x_right - x_left)
+            y_d = y1_2 - (self.v_buf[i] / 160.0) * (y1_2 - y0_2)
+            pts_dac.extend([x, max(y0_2, min(y1_2, y_d))])
+        cv.create_line(pts_dac, fill="#fbbf24", width=2)
+        cv.create_text(x_right - 170, y0_2 + 10, text=f"— 即時電壓: {self.fpga.drive_voltage_vrms:.1f} Vrms", fill="#fbbf24", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+
+        # Scope 3: Tip Amplitude (0 ~ 120 μm)
+        y0_3 = y1_2 + 8
+        y1_3 = y0_3 + plot_h - 8
+        self.draw_subscope_frame(cv, x_left, y0_3, x_right, y1_3, "CH3: 刀尖機械位移衝程振幅 (Tip Stroke Amplitude μm pk-pk)", "120μm", "0μm")
         pts_amp = []
         for i in range(self.buf_size):
-            x = 65 + (i / (self.buf_size - 1)) * (w - 85)
-            y_d = y1_3 - (self.v_buf[i] / 160.0) * (y1_3 - y0_3)
+            x = x_left + (i / (self.buf_size - 1)) * (x_right - x_left)
             y_a = y1_3 - (self.amp_buf[i] / 120.0) * (y1_3 - y0_3)
-            pts_dac.extend([x, max(y0_3, min(y1_3, y_d))])
             pts_amp.extend([x, max(y0_3, min(y1_3, y_a))])
-
-        cv.create_line(pts_dac, fill="#fbbf24", width=2)
         cv.create_line(pts_amp, fill="#f43f5e", width=2)
-        cv.create_text(w - 270, y0_3 + 14, text="— DAC Drive Voltage (Vrms)", fill="#fbbf24", font=("Segoe UI", 9, "bold"), anchor=tk.W)
-        cv.create_text(w - 270, y0_3 + 28, text="— Tip Amplitude (μm Displacement)", fill="#f43f5e", font=("Segoe UI", 9, "bold"), anchor=tk.W)
+        cv.create_text(x_right - 230, y0_3 + 10, text=f"— 刀尖位移: {self.physics.blade_amplitude_um:.1f} μm (目標 {self.fpga.target_amplitude_um:.0f}μm)", fill="#f43f5e", font=("Segoe UI", 8, "bold"), anchor=tk.W)
 
-    def draw_subscope_frame(self, cv, x0, y0, x1, y1, title, max_label, min_label):
+        # Scope 4: Total Current (0 ~ 2.5 A)
+        y0_4 = y1_3 + 8
+        y1_4 = y0_4 + plot_h - 8
+        self.draw_subscope_frame(cv, x_left, y0_4, x_right, y1_4, "CH4: 換能器總驅動電流 (Total Current A_rms)", "2.5A", "0.0A")
+        pts_curr = []
+        for i in range(self.buf_size):
+            x = x_left + (i / (self.buf_size - 1)) * (x_right - x_left)
+            y_c = y1_4 - (self.i_buf[i] / 2.5) * (y1_4 - y0_4)
+            pts_curr.extend([x, max(y0_4, min(y1_4, y_c))])
+        cv.create_line(pts_curr, fill="#34d399", width=2)
+        cv.create_text(x_right - 180, y0_4 + 10, text=f"— 總電流: {self.physics.total_current:.2f} A_rms", fill="#34d399", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+
+    def draw_subscope_frame(self, cv, x0, y0, x1, y1, title, max_label, min_label, right_max=None, right_min=None):
         cv.create_rectangle(x0, y0, x1, y1, fill="#070a0e", outline="#1e293b")
+        for div in range(1, 10):
+            gx = x0 + (div / 10.0) * (x1 - x0)
+            cv.create_line(gx, y0, gx, y1, fill="#111827", dash=(1, 4))
         cv.create_line(x0, (y0+y1)/2, x1, (y0+y1)/2, fill="#111827", dash=(2, 4))
-        cv.create_text(x0 + 10, y0 + 12, text=title, fill="#f1f5f9", font=("Segoe UI", 10, "bold"), anchor=tk.W)
-        cv.create_text(x0 - 6, y0 + 10, text=max_label, fill="#94a3b8", font=("Segoe UI", 8, "bold"), anchor=tk.E)
-        cv.create_text(x0 - 6, y1 - 10, text=min_label, fill="#94a3b8", font=("Segoe UI", 8, "bold"), anchor=tk.E)
+        cv.create_text(x0 + 8, y0 + 10, text=title, fill="#f1f5f9", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+        cv.create_text(x0 - 5, y0 + 8, text=max_label, fill="#94a3b8", font=("Segoe UI", 7, "bold"), anchor=tk.E)
+        cv.create_text(x0 - 5, y1 - 8, text=min_label, fill="#94a3b8", font=("Segoe UI", 7, "bold"), anchor=tk.E)
+        if right_max and right_min:
+            cv.create_text(x1 + 5, y0 + 8, text=right_max, fill="#c084fc", font=("Segoe UI", 7, "bold"), anchor=tk.W)
+            cv.create_text(x1 + 5, y1 - 8, text=right_min, fill="#c084fc", font=("Segoe UI", 7, "bold"), anchor=tk.W)
 
 
 # ----------------------------------------------------------------------
