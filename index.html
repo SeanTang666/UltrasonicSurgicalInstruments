@@ -542,25 +542,25 @@
         <div class="control-row">
           <div class="control-label">
             <span>組織聲阻尼 (Tissue Damping Rm, Ω):</span>
-            <span class="val" id="val-damping">0 Ω</span>
+            <span class="val" id="val-damping">0.00 Ω</span>
           </div>
-          <input type="range" id="slideDamping" min="0" max="350" step="1" value="0">
+          <input type="range" id="slideDamping" min="0" max="350" step="0.01" value="0">
         </div>
 
         <div class="control-row">
           <div class="control-label">
             <span>刀鉗咬合夾持力 (Clamp Pressure):</span>
-            <span class="val" id="val-clamp">0 %</span>
+            <span class="val" id="val-clamp">0.00 %</span>
           </div>
-          <input type="range" id="slideClamp" min="0" max="100" step="1" value="0">
+          <input type="range" id="slideClamp" min="0" max="100" step="0.01" value="0">
         </div>
 
         <div class="control-row">
           <div class="control-label">
             <span>組織剛性共振頻偏 (Stiffness Shift Δfs):</span>
-            <span class="val" id="val-stiffness">0 Hz</span>
+            <span class="val" id="val-stiffness">0.00 Hz</span>
           </div>
-          <input type="range" id="slideStiffness" min="-400" max="200" step="1" value="0">
+          <input type="range" id="slideStiffness" min="-400" max="200" step="0.01" value="0">
         </div>
 
         <div class="control-row">
@@ -941,23 +941,23 @@
 
     slideDamping.addEventListener('input', (e) => {
       scenario = "manual";
-      const val = Math.round(parseFloat(e.target.value) || 0);
+      const val = Math.round((parseFloat(e.target.value) || 0) * 100) / 100;
       Physics.tissueDamping = val;
-      document.getElementById('val-damping').textContent = `${val} Ω`;
+      document.getElementById('val-damping').textContent = `${val.toFixed(2)} Ω`;
     });
 
     slideClamp.addEventListener('input', (e) => {
       scenario = "manual";
-      const val = Math.round(parseFloat(e.target.value) || 0);
+      const val = Math.round((parseFloat(e.target.value) || 0) * 100) / 100;
       Physics.clampPressure = val / 100.0;
-      document.getElementById('val-clamp').textContent = `${val} %`;
+      document.getElementById('val-clamp').textContent = `${val.toFixed(2)} %`;
     });
 
     slideStiffness.addEventListener('input', (e) => {
       scenario = "manual";
-      const val = Math.round(parseFloat(e.target.value) || 0);
+      const val = Math.round((parseFloat(e.target.value) || 0) * 100) / 100;
       Physics.tissueStiffness = val;
-      document.getElementById('val-stiffness').textContent = `${val} Hz`;
+      document.getElementById('val-stiffness').textContent = `${val.toFixed(2)} Hz`;
     });
 
     slideTemp.addEventListener('input', (e) => {
@@ -1004,9 +1004,9 @@
     });
 
     function setStimulus(damping, clamp, stiffness) {
-      const d = Math.round(damping);
-      const c = Math.round(clamp);
-      const s = Math.round(stiffness);
+      const d = Math.round(Number(damping) * 100) / 100;
+      const c = Math.round(Number(clamp) * 100) / 100;
+      const s = Math.round(Number(stiffness) * 100) / 100;
 
       Physics.tissueDamping = d;
       Physics.clampPressure = c / 100.0;
@@ -1016,9 +1016,9 @@
       slideClamp.value = c;
       slideStiffness.value = s;
 
-      document.getElementById('val-damping').textContent = `${d} Ω`;
-      document.getElementById('val-clamp').textContent = `${c} %`;
-      document.getElementById('val-stiffness').textContent = `${s} Hz`;
+      document.getElementById('val-damping').textContent = `${d.toFixed(2)} Ω`;
+      document.getElementById('val-clamp').textContent = `${c.toFixed(2)} %`;
+      document.getElementById('val-stiffness').textContent = `${s.toFixed(2)} Hz`;
     }
 
     // -------------------------------------------------------------

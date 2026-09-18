@@ -239,3 +239,32 @@ Voltage / Current sensing → ADC → FPGA → 計算 Phase / Impedance → Reso
   - `[MODIFY] index.html`
   - `[MODIFY] DEVELOPMENT_LOG.md`
 
+---
+
+### [Iteration 9] 2026-09-18 14:36:50
+- **User Prompt**:
+  ```text
+  請框內的小數點只取到兩位，4捨五入
+  [用戶上傳圖片：紅框標註手動即時微調變因欄位：組織聲阻尼 139.9999999999999 Ω、刀鉗夾持力 94.99999999999994 %、組織剛性頻偏 -79.99999999999993 Hz]
+  ```
+- **問題分析 (Problem Diagnosis)**:
+  - 使用者明確要求「手動即時微調任意變因」框內之三個變因（組織聲阻尼、刀鉗夾持力、組織剛性頻偏）數值顯示規格須**精確四捨五入並嚴格保留至小數點後兩位 (2 decimal places, e.g. `140.00 Ω`)**。
+  - 原 HTML `<input type="range">` 滑桿的 `step="1"` 限制了微觀解析度，且文字顯示未固定採用 `.toFixed(2)`。
+- **程式改進與動作 (Coding Improvements)**:
+  1. **固定雙位小數與四捨五入 (toFixed(2) & Math.round(*100)/100)**：
+     - 在 `setStimulus(damping, clamp, stiffness)` 中：
+       - `d = Math.round(Number(damping) * 100) / 100` $\rightarrow$ `${d.toFixed(2)} Ω`
+       - `c = Math.round(Number(clamp) * 100) / 100` $\rightarrow$ `${c.toFixed(2)} %`
+       - `s = Math.round(Number(stiffness) * 100) / 100` $\rightarrow$ `${s.toFixed(2)} Hz`
+     - 徹底杜絕浮點運算產生的 `139.9999999999999` 或 `94.99999999999994`，精確收斂為 `140.00 Ω`、`95.00 %`、`-80.00 Hz`。
+  2. **滑桿組件步階擴充至 0.01 (step="0.01")**：
+     - 將 `slideDamping`、`slideClamp`、`slideStiffness` 的 `step` 屬性由 `1` 調整為 `0.01`，支援平滑高精度的動態連續位置設定。
+     - 手動拖曳監聽器同步採用 `Math.round(val * 100) / 100` 與 `.toFixed(2)` 格式化。
+  3. **全站與 GitHub Pages 同步**：
+     - 同步更新 `simulator.html` 與 `index.html`，並推送到遠端倉庫。
+- **修改檔案**:
+  - `[MODIFY] simulator.html`
+  - `[MODIFY] index.html`
+  - `[MODIFY] DEVELOPMENT_LOG.md`
+
+
