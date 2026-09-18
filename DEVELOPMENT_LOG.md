@@ -267,4 +267,55 @@ Voltage / Current sensing → ADC → FPGA → 計算 Phase / Impedance → Reso
   - `[MODIFY] index.html`
   - `[MODIFY] DEVELOPMENT_LOG.md`
 
+---
+
+### [Iteration 10] 2026-09-18 14:48:00
+- **User Prompt**:
+  ```text
+  1. 紅框內的play, 讓我再按一次可以pause, ie. play and pause toggle. 
+  2. 0.5sec 的horizontal scale不夠用，我再來要能看到55.5Khz PLL的調控精細過程，55.5Khz被FPGA用多高的頻率去偵測？ADC用多高的頻率去偵測，然後feedback給FPGA的哪一個功能模組去做DDS調整？細部信號的解析是設計上必須了解的。
+  [用戶上傳圖片：紅框標註「▶ 血管閉合切斷全流程 (Seal & Transect)」按鈕與示波器時間軸]
+  ```
+- **問題分析與硬體架構解構 (Problem Diagnosis & Hardware Architectural Analysis)**:
+  1. **臨床時序按鈕缺乏暫停切換機制**：原先「▶ 血管閉合切斷全流程」為單向觸發，點擊後只能等待完整 5.5 秒流程走完，無法在血管變性、沸騰或離斷瞬間凍結時間軸仔細比對波形。
+  2. **巨觀時間軸（0.5s~10s）無法透視微觀 55.5 kHz 射頻正弦波與鎖相環動態**：
+     - 超音波手術刀中心頻率 $f_0 \approx 55.5\text{ kHz}$，單一正弦波週期僅約 $T \approx 18.018\ \mu\text{s}$。
+     - 0.5s 示波器視窗包含了約 27,750 個交流週期，只能看到包絡線（Envelope），無法觀察正弦波過零點、相位超前/滯後與 ADC 採樣過程。
+  3. **硬體架構設計解答 (ETHICON GEN11 原廠硬體映射)**：
+     - **ADC 偵測頻率**：高速雙通道 Flash/Pipelined ADC 以 **60.0 MSPS**（14-bit）同步採樣驅動電壓感測器與電流互感器。每 $55.5\text{ kHz}$ 週期採集 $\frac{60\text{ MHz}}{55.5\text{ kHz}} \approx \mathbf{1,081\text{ 個採樣點}}$，徹底消除高頻諧波與量化抖動。
+     - **FPGA 偵測與運算時脈**：FPGA 核心工作時脈由 TCXO 晶振倍頻至 **120.0 MHz**。過零檢測器（ZCD / TDC）具備 **8.33 ns** 時間解析度，相對於 55.5 kHz 相當於極限 $\mathbf{0.166^\circ}$ 的超精細相角解析度。
+     - **Feedback 調節 DDS 的功能模組**：
+       - 第一步：`Dual ADC (60 MSPS)` 採集瞬時 $v[n], i[n]$。
+       - 第二步：`CORDIC / 數位正交解調與過零相檢模組 (PFD/ZCD @ 120 MHz)` 提取即時相角差 $\Delta\phi$。
+       - 第三步：`相位誤差器` 計算 $e_\phi = \Delta\phi - 0.00^\circ$。
+       - 第四步：**回授至關鍵核心模組——`數字鎖相環環路濾波器 (DPLL Loop Filter, PI 控制器)`**，於每個 $18.02\ \mu\text{s}$ 週期（55.5 kHz 同步更新）運算輸出調頻量 $\Delta f$。
+       - 第五步：$\Delta f$ 寫入 **`32 位元頻率控制字暫存器 (FTW Register)`**，累加至 **`DDS / NCO 相位累加器`**（120 MHz 時脈），經 Sine LUT 查表送出至 14-bit 120 MSPS 驅動 DAC。
+- **程式改進與動作 (Coding Improvements)**:
+  1. **臨床時序按鈕 Play / Pause Toggle 互動切換**：
+     - 加入 `vesselState` 狀態機（`idle` ➜ `playing` ➜ `paused`）。
+     - 點選啟動時顯示「`⏸ 暫停血管流程 (Pause)`」（橘色警告樣式），再點一次凍結 `scenTimer` 與變因，按鈕切換為「`▶ 繼續血管流程 (Resume)`」（綠色就緒樣式）。
+     - 任何其他手動模式按鈕切換時，自動安全重置回初始狀態。
+  2. **多通道示波器時基擴充 (Main DSO Toolbar)**：
+     - 示波器工具列新增微秒/毫秒等級解析度按鈕：`50ms` ($5\text{ ms/div}$)、`100ms` ($10\text{ ms/div}$)，滿足由巨觀至過渡暫態的觀測需求。
+  3. **全新研發：🔬 55.5 kHz 射頻微觀週期正弦波與 FPGA 閉環模組解析面板 (`.rf-inspector-card`)**：
+     - **左側：微觀射頻示波器畫布 (`#rfCanvas`)**：
+       - 即時渲染真實 $55.5\text{ kHz}$ 交流驅動電壓 $V_{\text{drive}}(t)$ 與感測電流 $I_{\text{sense}}(t)$。
+       - 支援 `36μs (2週期)`、`90μs (5週期)`、`180μs (10週期)`、`540μs (30週期)` 微觀時基切換。
+       - **ADC 60 MSPS 離散採樣點視覺化**：於電流波形上即時標記出 16.67 ns 取樣週期的離散採樣發光點。
+       - **過零檢測與時間差動態指示**：標註電壓過零與電流過零的垂直虛線標記，並以雙箭頭即時指示過零時間差 $\Delta t$（精確至 $0.1\text{ ns}$）。
+     - **右側：FPGA 4 級硬體閉環管線即時動態卡片 (Pipeline Readouts)**：
+       - `Step 1: Dual ADC @ 60.00 MSPS (14-bit, dt = 16.67 ns)`
+       - `Step 2: CORDIC / ZCD 檢相 (120 MHz, 8.33 ns, 即時 Δφ 與 Δt)`
+       - `Step 3: DPLL Loop Filter (PI @ 18.02 μs, 即時輸出頻率修正量 Δf)`
+       - `Step 4: 32-bit DDS / NCO 累加器 (即時 FTW 暫存器數值與 16 進位字元)`
+  4. **跨平台同步與日誌登錄**：
+     - 同步更新 Web 介面 `simulator.html` 與 GitHub Pages 進入點 `index.html`。
+     - 同步更新 Python GUI 桌面程式 `ultrasonic_surgical_sim.py`，支援 Play/Pause 切換。
+- **修改檔案**:
+  - `[MODIFY] simulator.html`
+  - `[MODIFY] index.html`
+  - `[MODIFY] ultrasonic_surgical_sim.py`
+  - `[MODIFY] DEVELOPMENT_LOG.md`
+
+
 

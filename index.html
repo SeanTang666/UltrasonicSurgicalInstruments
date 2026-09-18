@@ -385,10 +385,117 @@
     }
     #scopeCanvas {
       width: 100%;
-      height: 640px;
+      height: 550px;
       background: #06090e;
       border-radius: 8px;
       display: block;
+    }
+
+    /* Microscopic RF & FPGA Inspector Card */
+    .rf-inspector-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 9px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .rf-inspector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .rf-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rf-subcontrols {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+    .rf-grid {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .rf-canvas-container {
+      position: relative;
+      background: #06090e;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #rfCanvas {
+      width: 100%;
+      height: 165px;
+      display: block;
+    }
+    .rf-legend {
+      background: #0b111a;
+      border-top: 1px solid var(--border-color);
+      padding: 4px 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .fpga-pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      justify-content: space-between;
+    }
+    .fpga-pipe-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 4px 9px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .pipe-step {
+      font-size: 0.6rem;
+      color: var(--cyan);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .pipe-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-top: 1px;
+    }
+    .pipe-val {
+      font-family: monospace;
+      font-size: 0.73rem;
+      font-weight: 800;
+      color: #38bdf8;
+      margin-top: 1px;
+    }
+    .pipe-desc {
+      font-size: 0.63rem;
+      color: var(--text-dim);
+      line-height: 1.2;
+      margin-top: 1px;
     }
 
     /* Alert Banner inside knife-canvas-container */
@@ -638,6 +745,65 @@
 
       </div>
 
+      <!-- 🔬 FPGA DPLL & ADC 射頻微觀週期波形與硬體架構解析面板 -->
+      <div class="rf-inspector-card">
+        <div class="rf-inspector-header">
+          <div class="rf-title">
+            <span>🔬 55.5 kHz 射頻微觀週期交流正弦信號與 FPGA 閉環模組解析 (Microscopic RF & FPGA Control Chain)</span>
+          </div>
+          <div class="rf-subcontrols">
+            <span class="tb-label">微觀時基 (RF Scale):</span>
+            <div class="tb-buttons" id="rfTbButtons">
+              <button class="btn-tb active" data-rftime="36">36 μs (2週期)</button>
+              <button class="btn-tb" data-rftime="90">90 μs (5週期)</button>
+              <button class="btn-tb" data-rftime="180">180 μs (10週期)</button>
+              <button class="btn-tb" data-rftime="540">540 μs (30週期)</button>
+            </div>
+            <span class="tb-info" id="rfTbInfo">3.6 μs/div</span>
+          </div>
+        </div>
+
+        <div class="rf-grid">
+          <!-- Left: Microscopic RF Waveform Canvas -->
+          <div class="rf-canvas-container">
+            <canvas id="rfCanvas"></canvas>
+            <div class="rf-legend">
+              <span style="color:#00f0ff;">— V_drive (120 MSPS DAC 輸出電壓)</span>
+              <span style="color:#10b981;">— I_sense (60 MSPS ADC 採樣點與感測電流)</span>
+              <span style="color:#c084fc;" id="rfZeroCrossInfo">⏱ 過零時差 Δt: 0.00 ns (Δφ: 0.00°)</span>
+            </div>
+          </div>
+
+          <!-- Right: FPGA 4-Stage Hardware Modular Architecture Pipeline -->
+          <div class="fpga-pipeline">
+            <div class="fpga-pipe-card">
+              <div class="pipe-step">1. 類比前端與同步高速取樣</div>
+              <div class="pipe-title">Dual Flash/Pipelined ADC (V & I)</div>
+              <div class="pipe-val" id="pipe-adc">60.00 MSPS @ 14-bit (dt = 16.67 ns)</div>
+              <div class="pipe-desc">每 55.5 kHz 週期採集 1,081 點，消除高頻諧波與量化雜訊</div>
+            </div>
+            <div class="fpga-pipe-card">
+              <div class="pipe-step">2. 數位正交解調與相位檢測</div>
+              <div class="pipe-title">CORDIC / ZCD (過零檢測模組)</div>
+              <div class="pipe-val" id="pipe-pfd">120.0 MHz 主時脈 (8.33 ns 解析度)</div>
+              <div class="pipe-desc">即時提取 V/I 瞬時相角差 Δφ 與過零點時間戳記</div>
+            </div>
+            <div class="fpga-pipe-card">
+              <div class="pipe-step">3. 閉環調諧核心模組 (Feedback 目標)</div>
+              <div class="pipe-title">DPLL 數位環路濾波器 (Loop Filter, PI)</div>
+              <div class="pipe-val" id="pipe-pi">每 18.02 μs (55.5 kHz 同步更新)</div>
+              <div class="pipe-desc">誤差 e_φ = Δφ - 0° ➜ 經 PI 運算輸出頻率修正量 Δf</div>
+            </div>
+            <div class="fpga-pipe-card">
+              <div class="pipe-step">4. 數控頻率合成與驅動激發</div>
+              <div class="pipe-title">32-bit DDS / NCO 累加器 ➜ 120 MSPS DAC</div>
+              <div class="pipe-val" id="pipe-ftw">FTW: 1,986,423 (0x1E4F47)</div>
+              <div class="pipe-desc">FTW 寫入相位累加器 ➜ 查表 Sine LUT ➜ 14-bit 高速 DAC</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Real-Time Multi-Trace Oscilloscope -->
       <div class="scope-card">
         <div class="scope-toolbar">
@@ -647,6 +813,8 @@
           <div class="timebase-controls">
             <span class="tb-label">⏱ 水平時基 (Timebase):</span>
             <div class="tb-buttons" id="tbButtons">
+              <button class="btn-tb" data-time="0.05">50ms</button>
+              <button class="btn-tb" data-time="0.1">100ms</button>
               <button class="btn-tb" data-time="0.5">0.5s</button>
               <button class="btn-tb" data-time="1.0">1.0s</button>
               <button class="btn-tb" data-time="2.5">2.5s</button>
@@ -870,9 +1038,11 @@
     const liveBadge = document.getElementById('liveBadge');
     const liveBadgeText = document.getElementById('liveBadgeText');
 
-    const tbButtons = document.querySelectorAll('.btn-tb');
+    const tbButtons = document.querySelectorAll('#tbButtons .btn-tb');
     const tbInfoText = document.getElementById('tbInfoText');
     const tbDivMap = {
+      0.05: '5 ms/div',
+      0.1: '10 ms/div',
       0.5: '50 ms/div',
       1.0: '100 ms/div',
       2.5: '250 ms/div',
@@ -886,6 +1056,25 @@
         btn.classList.add('active');
         currentWindowSec = parseFloat(btn.dataset.time);
         tbInfoText.textContent = tbDivMap[currentWindowSec] || `${(currentWindowSec/10).toFixed(2)} s/div`;
+      });
+    });
+
+    let currentRfWindowUs = 36.0;
+    const rfTbButtons = document.querySelectorAll('#rfTbButtons .btn-tb');
+    const rfTbInfo = document.getElementById('rfTbInfo');
+    const rfDivMap = {
+      36: '3.6 μs/div',
+      90: '9.0 μs/div',
+      180: '18.0 μs/div',
+      540: '54.0 μs/div'
+    };
+
+    rfTbButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        rfTbButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRfWindowUs = parseFloat(btn.dataset.rftime);
+        rfTbInfo.textContent = rfDivMap[currentRfWindowUs] || `${(currentRfWindowUs/10).toFixed(1)} μs/div`;
       });
     });
 
@@ -974,33 +1163,63 @@
       }
     });
 
-    // Preset Buttons
+    // Preset Buttons & Play/Pause Toggle
+    const btnVessel = document.getElementById('btnVessel');
+    let vesselState = "idle"; // "idle", "playing", "paused"
+
+    function resetVesselBtn() {
+      vesselState = "idle";
+      btnVessel.innerHTML = "▶ 血管閉合切斷全流程 (Seal & Transect)";
+      btnVessel.style.background = "";
+      btnVessel.style.borderColor = "";
+    }
+
     document.getElementById('btnAir').addEventListener('click', () => {
+      resetVesselBtn();
       scenario = "manual";
       setStimulus(0, 0, 0);
       FPGA.resetAndSweep(Physics.fs);
     });
 
     document.getElementById('btnFat').addEventListener('click', () => {
+      resetVesselBtn();
       scenario = "manual";
       setStimulus(50, 60, -40);
       FPGA.resetAndSweep(Physics.fs);
     });
 
     document.getElementById('btnMuscle').addEventListener('click', () => {
+      resetVesselBtn();
       scenario = "manual";
       setStimulus(160, 90, -140);
       FPGA.resetAndSweep(Physics.fs);
     });
 
     document.getElementById('btnStall').addEventListener('click', () => {
+      resetVesselBtn();
       scenario = "manual";
       setStimulus(290, 100, -350);
     });
 
-    document.getElementById('btnVessel').addEventListener('click', () => {
-      scenario = "vessel";
-      scenTimer = 0.0;
+    btnVessel.addEventListener('click', () => {
+      if (vesselState === "idle") {
+        vesselState = "playing";
+        scenario = "vessel";
+        scenTimer = 0.0;
+        btnVessel.innerHTML = "⏸ 暫停血管流程 (Pause)";
+        btnVessel.style.background = "#d97706";
+        btnVessel.style.borderColor = "#f59e0b";
+      } else if (vesselState === "playing") {
+        vesselState = "paused";
+        btnVessel.innerHTML = "▶ 繼續血管流程 (Resume)";
+        btnVessel.style.background = "#059669";
+        btnVessel.style.borderColor = "#10b981";
+      } else if (vesselState === "paused") {
+        vesselState = "playing";
+        btnVessel.innerHTML = "⏸ 暫停血管流程 (Pause)";
+        btnVessel.style.background = "#d97706";
+        btnVessel.style.borderColor = "#f59e0b";
+      }
     });
 
     function setStimulus(damping, clamp, stiffness) {
@@ -1027,12 +1246,16 @@
     const dt = 0.025;
     const knifeCanvas = document.getElementById('knifeCanvas');
     const knifeCtx = knifeCanvas.getContext('2d');
+    const rfCanvas = document.getElementById('rfCanvas');
+    const rfCtx = rfCanvas.getContext('2d');
     const scopeCanvas = document.getElementById('scopeCanvas');
     const scopeCtx = scopeCanvas.getContext('2d');
 
     function resizeCanvases() {
       knifeCanvas.width = knifeCanvas.clientWidth * window.devicePixelRatio;
       knifeCanvas.height = knifeCanvas.clientHeight * window.devicePixelRatio;
+      rfCanvas.width = rfCanvas.clientWidth * window.devicePixelRatio;
+      rfCanvas.height = rfCanvas.clientHeight * window.devicePixelRatio;
       scopeCanvas.width = scopeCanvas.clientWidth * window.devicePixelRatio;
       scopeCanvas.height = scopeCanvas.clientHeight * window.devicePixelRatio;
     }
@@ -1043,20 +1266,25 @@
       simTime += dt;
 
       if (scenario === "vessel") {
-        scenTimer += dt;
-        const t = scenTimer;
-        if (t < 1.5) {
-          const prog = t / 1.5;
-          setStimulus(30 + 110 * prog, 40 + 55 * prog, -80 * prog);
-        } else if (t < 3.4) {
-          const prog = (t - 1.5) / 1.9;
-          setStimulus(140 + 110 * prog, 95, -80 - 70 * prog);
-        } else if (t < 4.1) {
-          const prog = 1.0 - (t - 3.4) / 0.7;
-          setStimulus(250 * prog, 95 * prog, -150 * prog);
-        } else {
-          setStimulus(0, 0, 0);
-          if (t > 5.5) scenario = "manual";
+        if (vesselState === "playing") {
+          scenTimer += dt;
+          const t = scenTimer;
+          if (t < 1.5) {
+            const prog = t / 1.5;
+            setStimulus(30 + 110 * prog, 40 + 55 * prog, -80 * prog);
+          } else if (t < 3.4) {
+            const prog = (t - 1.5) / 1.9;
+            setStimulus(140 + 110 * prog, 95, -80 - 70 * prog);
+          } else if (t < 4.1) {
+            const prog = 1.0 - (t - 3.4) / 0.7;
+            setStimulus(250 * prog, 95 * prog, -150 * prog);
+          } else {
+            setStimulus(0, 0, 0);
+            if (t > 5.5) {
+              scenario = "manual";
+              resetVesselBtn();
+            }
+          }
         }
       }
 
@@ -1074,6 +1302,7 @@
 
       updateTelemetryUI();
       renderKnifeGraphic();
+      renderRfInspector();
       renderScopeGraphic();
 
       requestAnimationFrame(loop);
@@ -1222,6 +1451,154 @@
       knifeCtx.fillText(`↔ ${Physics.amplitude_um.toFixed(1)} μm`, tipX + 62, midY + 5);
 
       knifeCtx.restore();
+    }
+
+    function renderRfInspector() {
+      const w = rfCanvas.width;
+      const h = rfCanvas.height;
+      rfCtx.clearRect(0, 0, w, h);
+
+      const dpr = window.devicePixelRatio || 1;
+      rfCtx.save();
+      rfCtx.scale(dpr, dpr);
+      const cw = w / dpr;
+      const ch = h / dpr;
+
+      const midY = ch / 2;
+      const f = (FPGA.powerActive && FPGA.driveFreq > 1000) ? FPGA.driveFreq : 55500.0;
+      const phaseDeg = FPGA.powerActive ? Physics.phase_deg : 0.0;
+      const phaseRad = phaseDeg * (Math.PI / 180.0);
+      const tTotal = currentRfWindowUs * 1e-6; // in seconds
+
+      // 1. Oscilloscope Graticule: 10 horizontal divisions
+      rfCtx.strokeStyle = '#15202e';
+      rfCtx.lineWidth = 1;
+      rfCtx.setLineDash([2, 3]);
+      for (let d = 1; d < 10; d++) {
+        const gx = (d / 10) * cw;
+        rfCtx.beginPath();
+        rfCtx.moveTo(gx, 0);
+        rfCtx.lineTo(gx, ch);
+        rfCtx.stroke();
+      }
+
+      // Vertical divisions
+      for (let v = 1; v < 4; v++) {
+        const gy = (v / 4) * ch;
+        rfCtx.beginPath();
+        rfCtx.moveTo(0, gy);
+        rfCtx.lineTo(cw, gy);
+        rfCtx.stroke();
+      }
+
+      // Center Reference Baseline
+      rfCtx.strokeStyle = '#1e2d42';
+      rfCtx.lineWidth = 1;
+      rfCtx.setLineDash([]);
+      rfCtx.beginPath();
+      rfCtx.moveTo(0, midY);
+      rfCtx.lineTo(cw, midY);
+      rfCtx.stroke();
+
+      // 2. Waveforms
+      const vPeakPix = ch * 0.36;
+      const iPeakPix = ch * 0.36;
+
+      // V_drive (Cyan #00f0ff)
+      rfCtx.strokeStyle = '#00f0ff';
+      rfCtx.lineWidth = 2;
+      rfCtx.beginPath();
+      for (let px = 0; px <= cw; px++) {
+        const t = (px / cw) * tTotal;
+        const v = Math.sin(2 * Math.PI * f * t);
+        const py = midY - v * vPeakPix;
+        if (px === 0) rfCtx.moveTo(px, py);
+        else rfCtx.lineTo(px, py);
+      }
+      rfCtx.stroke();
+
+      // I_sense (Emerald Green #10b981)
+      rfCtx.strokeStyle = '#10b981';
+      rfCtx.lineWidth = 2;
+      rfCtx.beginPath();
+      for (let px = 0; px <= cw; px++) {
+        const t = (px / cw) * tTotal;
+        const i = Math.sin(2 * Math.PI * f * t - phaseRad);
+        const py = midY - i * iPeakPix;
+        if (px === 0) rfCtx.moveTo(px, py);
+        else rfCtx.lineTo(px, py);
+      }
+      rfCtx.stroke();
+
+      // 3. Draw ADC 60 MSPS Sampling Points
+      const dtAdc = 1.0 / 60.0e6; // 16.6667 ns
+      const nAdc = Math.floor(tTotal / dtAdc);
+      const stepDot = (currentRfWindowUs > 120) ? Math.ceil(nAdc / 200) : 1;
+
+      rfCtx.fillStyle = '#34d399';
+      for (let k = 0; k <= nAdc; k += stepDot) {
+        const t_k = k * dtAdc;
+        const px = (t_k / tTotal) * cw;
+        const i_val = Math.sin(2 * Math.PI * f * t_k - phaseRad);
+        const py = midY - i_val * iPeakPix;
+        rfCtx.beginPath();
+        rfCtx.arc(px, py, 2.2, 0, Math.PI * 2);
+        rfCtx.fill();
+      }
+
+      // 4. Zero-Crossing Detector Marker & Delta t
+      const period = 1.0 / f;
+      const tZeroV = period * 0.5;
+      const tZeroI = (period * 0.5) + (phaseRad / (2 * Math.PI * f));
+      const pxZeroV = (tZeroV / tTotal) * cw;
+      const pxZeroI = (tZeroI / tTotal) * cw;
+
+      if (pxZeroV >= 0 && pxZeroV <= cw && pxZeroI >= 0 && pxZeroI <= cw) {
+        rfCtx.strokeStyle = '#c084fc';
+        rfCtx.lineWidth = 1.5;
+        rfCtx.setLineDash([2, 2]);
+
+        rfCtx.beginPath();
+        rfCtx.moveTo(pxZeroV, midY - 35);
+        rfCtx.lineTo(pxZeroV, midY + 35);
+        rfCtx.stroke();
+
+        rfCtx.beginPath();
+        rfCtx.moveTo(pxZeroI, midY - 35);
+        rfCtx.lineTo(pxZeroI, midY + 35);
+        rfCtx.stroke();
+        rfCtx.setLineDash([]);
+
+        if (Math.abs(pxZeroI - pxZeroV) > 2) {
+          rfCtx.strokeStyle = '#e879f9';
+          rfCtx.lineWidth = 1.5;
+          rfCtx.beginPath();
+          rfCtx.moveTo(pxZeroV, midY - 20);
+          rfCtx.lineTo(pxZeroI, midY - 20);
+          rfCtx.stroke();
+        }
+      }
+
+      rfCtx.restore();
+
+      // 5. Update Legend and Pipeline Readouts
+      const dt_ns = (Math.abs(phaseDeg) / (360.0 * f)) * 1.0e9;
+      const signStr = phaseDeg >= 0 ? '+' : '';
+      const zeroText = FPGA.powerActive 
+        ? `⏱ 過零時差 Δt: ${dt_ns.toFixed(1)} ns (${signStr}${phaseDeg.toFixed(2)}°)`
+        : `⏱ 過零時差 Δt: STANDBY`;
+      document.getElementById('rfZeroCrossInfo').textContent = zeroText;
+
+      document.getElementById('pipe-pfd').textContent = 
+        FPGA.powerActive ? `120.0 MHz (8.33 ns 解析度) | Δφ: ${signStr}${phaseDeg.toFixed(2)}°` : '120.0 MHz | STANDBY';
+      
+      const df = FPGA.driveFreq - Physics.f0_nominal;
+      document.getElementById('pipe-pi').textContent = 
+        FPGA.powerActive ? `每 18.02 μs (55.5 kHz 更新) | 修正量 Δf: ${df >= 0 ? '+' : ''}${df.toFixed(1)} Hz` : '55.5 kHz | 待機';
+
+      const ftw = Math.round((FPGA.driveFreq / 120.0e6) * 4294967296);
+      document.getElementById('pipe-ftw').textContent = 
+        `FTW: ${ftw.toLocaleString()} (0x${ftw.toString(16).toUpperCase()})`;
     }
 
     function renderScopeGraphic() {

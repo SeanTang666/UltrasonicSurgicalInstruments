@@ -377,7 +377,8 @@ class UltrasonicSimulatorApp:
 
         btn_row2 = tk.Frame(sec_scen, bg="#19202a")
         btn_row2.pack(fill=tk.X, pady=2)
-        tk.Button(btn_row2, text="▶ 血管閉合切斷全流程 (Vessel Seal & Cut)", bg="#0284c7", fg="#ffffff", font=("Segoe UI", 9, "bold"), relief=tk.RAISED, command=self.scen_vessel_cut).pack(fill=tk.X, padx=2)
+        self.btn_vessel = tk.Button(btn_row2, text="▶ 血管閉合切斷全流程 (Vessel Seal & Cut)", bg="#0284c7", fg="#ffffff", font=("Segoe UI", 9, "bold"), relief=tk.RAISED, command=self.scen_vessel_cut)
+        self.btn_vessel.pack(fill=tk.X, padx=2)
 
         btn_row3 = tk.Frame(sec_scen, bg="#19202a")
         btn_row3.pack(fill=tk.X, pady=2)
@@ -496,6 +497,7 @@ class UltrasonicSimulatorApp:
     # Automated Scenarios
     # ------------------------------------------------------------------
     def scen_air(self):
+        self.reset_vessel_btn()
         self.current_scenario = "manual"
         self.slider_damping.set(0)
         self.slider_clamp.set(0)
@@ -504,6 +506,7 @@ class UltrasonicSimulatorApp:
         self.fpga.reset_and_sweep(self.physics.current_fs)
 
     def scen_fat(self):
+        self.reset_vessel_btn()
         self.current_scenario = "manual"
         self.slider_damping.set(50)
         self.slider_clamp.set(60)
@@ -512,6 +515,7 @@ class UltrasonicSimulatorApp:
         self.fpga.reset_and_sweep(self.physics.current_fs)
 
     def scen_muscle_cut(self):
+        self.reset_vessel_btn()
         self.current_scenario = "manual"
         self.slider_damping.set(160)
         self.slider_clamp.set(90)
@@ -521,15 +525,33 @@ class UltrasonicSimulatorApp:
 
     def scen_stall(self):
         # Touching bone or metallic clamp: damping spikes and stiffness shifts
+        self.reset_vessel_btn()
         self.current_scenario = "manual"
         self.slider_damping.set(290)
         self.slider_clamp.set(100)
         self.slider_stiffness.set(-350)
         self.on_manual_slider_change(0)
 
+    def reset_vessel_btn(self):
+        self.vessel_cut_state = "idle"
+        if hasattr(self, 'btn_vessel'):
+            self.btn_vessel.config(text="▶ 血管閉合切斷全流程 (Vessel Seal & Cut)", bg="#0284c7")
+
     def scen_vessel_cut(self):
-        self.current_scenario = "vessel_cut"
-        self.scenario_timer = 0.0
+        if not hasattr(self, 'vessel_cut_state'):
+            self.vessel_cut_state = "idle"
+        
+        if self.vessel_cut_state == "idle":
+            self.vessel_cut_state = "playing"
+            self.current_scenario = "vessel_cut"
+            self.scenario_timer = 0.0
+            self.btn_vessel.config(text="⏸ 暫停血管流程 (Pause)", bg="#d97706")
+        elif self.vessel_cut_state == "playing":
+            self.vessel_cut_state = "paused"
+            self.btn_vessel.config(text="▶ 繼續血管流程 (Resume)", bg="#059669")
+        elif self.vessel_cut_state == "paused":
+            self.vessel_cut_state = "playing"
+            self.btn_vessel.config(text="⏸ 暫停血管流程 (Pause)", bg="#d97706")
 
     # ------------------------------------------------------------------
     # Real-Time Dynamic Engine
@@ -545,7 +567,7 @@ class UltrasonicSimulatorApp:
         self.sim_time += self.dt
 
         # Progress automated scenario if active
-        if self.current_scenario == "vessel_cut":
+        if self.current_scenario == "vessel_cut" and getattr(self, 'vessel_cut_state', 'idle') == "playing":
             self.scenario_timer += self.dt
             t = self.scenario_timer
             if t < 1.5:
@@ -570,6 +592,7 @@ class UltrasonicSimulatorApp:
                 self.physics.clamp_pressure = 0.0
                 if t > 5.5:
                     self.current_scenario = "manual"
+                    self.reset_vessel_btn()
 
             self.slider_damping.set(int(self.physics.tissue_damping))
             self.slider_clamp.set(int(self.physics.clamp_pressure * 100))
