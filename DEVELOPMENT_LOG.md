@@ -317,5 +317,34 @@ Voltage / Current sensing → ADC → FPGA → 計算 Phase / Impedance → Reso
   - `[MODIFY] ultrasonic_surgical_sim.py`
   - `[MODIFY] DEVELOPMENT_LOG.md`
 
+---
 
-
+### [Iteration 11] 2026-09-18 15:02:00
+- **User Prompt**:
+  ```text
+  當我按下pause, 好像波形還繼續跑
+  ```
+- **問題分析 (Problem Diagnosis)**:
+  1. **採樣移位未凍結造成波形持續推移**：在前次實作中，點擊 `⏸ 暫停血管流程 (Pause)` 時，僅暫停了臨床劇本計時器 `scenTimer`，而 60 FPS 動態動畫主循環 (`loop()`) 依然持續推進 `simTime`，並且每一幀無條件執行 `history.*.shift()` 與 `push()`。
+  2. **歷史緩衝區遭同質常數洗掉**：暫停時由於變因維持定值，波形持續以每秒 60 筆的速度向左滾動移出畫面，約 10 秒後整個 600 筆緩衝區皆被平直直線取代，原本捕捉到的切斷與阻抗跳變瞬態資料全部流失。
+  3. **刀尖動畫與畫布缺少明確 HOLD 提示**：暫停時刀尖仍持續正弦震盪，示波器亦無明確鎖定標籤，使用者難以確認系統是已凍結還是仍在運行。
+- **程式改進與動作 (Coding Improvements)**:
+  1. **示波器與動態採樣真凍結 (True Waveform Acquisition Freeze & Hold)**：
+     - 在 `simulator.html` 的 `loop()` 中引入全局凍結判定：`const isPaused = (vesselState === "paused") || isScopeFrozen;`。
+     - 當處於暫停或示波器手動凍結時，將 `simTime += dt`、`Physics.update(...)`、`FPGA.step(...)` 以及全部 8 組示波器歷史緩衝區的 `history.*.shift()` / `push(...)` 完整置入 `if (!isPaused) { ... }` 內保護。暫停期間**不再推進時間，亦不再向歷史陣列推入任何新數據**，波形完全靜止定格。
+  2. **示波器停機縮放檢視功能 (Stop & Zoom Capability)**：
+     - 在波形凍結的狀態下，`renderScopeGraphic(isPaused)` 與畫布互動事件依然保持活躍。使用者在暫停時可任意點擊切換 `50ms`、`100ms`、`0.5s`、`1.0s`、`2.5s`、`5.0s`、`10.0s` 各水平時基按鈕，在定格的暫態波形上進行時間軸縮放，重現專業數位儲存示波器（DSO）標準行為。
+  3. **微觀射頻與刀尖視覺狀態同步凍結**：
+     - 傳入 `isPaused` 至 `renderKnifeGraphic(isPaused)`，暫停時刀尖機械震動偏移量立即歸零（`vib = 0.0`），停止抖動。
+     - 傳入 `isPaused` 至 `renderRfInspector(isPaused)`，於 55.5 kHz 射頻示波器畫布右上角即時顯示 `⏸ DSO HOLD (已凍結)` 狀態徽章。
+     - 於主示波器畫布（`#scopeCanvas`）正上方繪製半透明警示覆蓋條：`⏸ 採樣凍結中 (DSO HOLD / PAUSED) — 保持當前數據，可切換時基縮放檢視`。
+  4. **新增專用示波器手動鎖定按鈕 (`#btnScopeFreeze`)**：
+     - 於時基按鈕列右側加入 `⏸ 示波器鎖定 (Freeze) / ▶ 示波器解凍 (Run)` 按鈕，方便使用者於任何手動調節工況或極限負載下隨時單擊定格分析。
+  5. **跨平台與部署同步**：
+     - 同步更新 Python GUI 桌面程式 `ultrasonic_surgical_sim.py`：在 `update_simulation_step()` 中加入暫停返回機制，停止緩衝區推進，並在 Tkinter 畫布顯示 DSO HOLD 框與凍結刀尖振動。
+     - 同步複製更新 GitHub Pages 靜態網站入口 `index.html`。
+- **修改檔案**:
+  - `[MODIFY] simulator.html`
+  - `[MODIFY] index.html`
+  - `[MODIFY] ultrasonic_surgical_sim.py`
+  - `[MODIFY] DEVELOPMENT_LOG.md`

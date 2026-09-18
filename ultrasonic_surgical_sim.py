@@ -564,6 +564,9 @@ class UltrasonicSimulatorApp:
             self.root.after(30, self.schedule_next_frame)
 
     def update_simulation_step(self):
+        if getattr(self, 'vessel_cut_state', 'idle') == "paused":
+            return
+
         self.sim_time += self.dt
 
         # Progress automated scenario if active
@@ -693,8 +696,9 @@ class UltrasonicSimulatorApp:
         horn_x1 = w - 240
         y_mid = h // 2
         
-        # Vibration oscillation graphic effect (only when active)
-        if self.fpga.power_active:
+        # Vibration oscillation graphic effect (only when active and not paused)
+        is_paused = getattr(self, 'vessel_cut_state', 'idle') == "paused"
+        if self.fpga.power_active and not is_paused:
             vib_offset = math.sin(self.sim_time * 25.0) * (self.physics.blade_amplitude_um / 15.0)
         else:
             vib_offset = 0.0
@@ -838,6 +842,11 @@ class UltrasonicSimulatorApp:
             pts_curr.extend([x, max(y0_4, min(y1_4, y_c))])
         cv.create_line(pts_curr, fill="#34d399", width=2)
         cv.create_text(x_right - 180, y0_4 + 10, text=f"— 總電流: {self.physics.total_current:.2f} A_rms", fill="#34d399", font=("Segoe UI", 8, "bold"), anchor=tk.W)
+
+        if getattr(self, 'vessel_cut_state', 'idle') == "paused":
+            cv.create_rectangle(x_left, y0_1, x_right, y1_4, outline="#f59e0b", width=2)
+            cv.create_rectangle((x_left + x_right)//2 - 200, y0_1 + 5, (x_left + x_right)//2 + 200, y0_1 + 27, fill="#0f172a", outline="#f59e0b")
+            cv.create_text((x_left + x_right)//2, y0_1 + 16, text="⏸ 波形採樣凍結中 (DSO HOLD / PAUSED) — 保持當前瞬間數據", fill="#fbbf24", font=("Segoe UI", 9, "bold"))
 
     def draw_subscope_frame(self, cv, x0, y0, x1, y1, title, max_label, min_label, right_max=None, right_min=None):
         cv.create_rectangle(x0, y0, x1, y1, fill="#070a0e", outline="#1e293b")

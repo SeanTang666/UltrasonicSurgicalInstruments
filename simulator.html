@@ -822,6 +822,7 @@
               <button class="btn-tb" data-time="10.0">10.0s</button>
             </div>
             <span class="tb-info" id="tbInfoText">500 ms/div</span>
+            <button class="btn-tb" id="btnScopeFreeze" style="margin-left:6px; border-color:#f59e0b; color:#fbbf24; background:#1e293b;">⏸ 示波器鎖定 (Freeze)</button>
           </div>
         </div>
         <canvas id="scopeCanvas"></canvas>
@@ -1059,6 +1060,25 @@
       });
     });
 
+    let isScopeFrozen = false;
+    const btnScopeFreeze = document.getElementById('btnScopeFreeze');
+    if (btnScopeFreeze) {
+      btnScopeFreeze.addEventListener('click', () => {
+        isScopeFrozen = !isScopeFrozen;
+        if (isScopeFrozen) {
+          btnScopeFreeze.innerHTML = "▶ 示波器解凍 (Run)";
+          btnScopeFreeze.style.background = "#059669";
+          btnScopeFreeze.style.borderColor = "#10b981";
+          btnScopeFreeze.style.color = "#ffffff";
+        } else {
+          btnScopeFreeze.innerHTML = "⏸ 示波器鎖定 (Freeze)";
+          btnScopeFreeze.style.background = "#1e293b";
+          btnScopeFreeze.style.borderColor = "#f59e0b";
+          btnScopeFreeze.style.color = "#fbbf24";
+        }
+      });
+    }
+
     let currentRfWindowUs = 36.0;
     const rfTbButtons = document.querySelectorAll('#rfTbButtons .btn-tb');
     const rfTbInfo = document.getElementById('rfTbInfo');
@@ -1263,47 +1283,52 @@
     resizeCanvases();
 
     function loop() {
-      simTime += dt;
+      const isPaused = (vesselState === "paused") || isScopeFrozen;
 
-      if (scenario === "vessel") {
-        if (vesselState === "playing") {
-          scenTimer += dt;
-          const t = scenTimer;
-          if (t < 1.5) {
-            const prog = t / 1.5;
-            setStimulus(30 + 110 * prog, 40 + 55 * prog, -80 * prog);
-          } else if (t < 3.4) {
-            const prog = (t - 1.5) / 1.9;
-            setStimulus(140 + 110 * prog, 95, -80 - 70 * prog);
-          } else if (t < 4.1) {
-            const prog = 1.0 - (t - 3.4) / 0.7;
-            setStimulus(250 * prog, 95 * prog, -150 * prog);
-          } else {
-            setStimulus(0, 0, 0);
-            if (t > 5.5) {
-              scenario = "manual";
-              resetVesselBtn();
+      if (!isPaused) {
+        simTime += dt;
+
+        if (scenario === "vessel") {
+          if (vesselState === "playing") {
+            scenTimer += dt;
+            const t = scenTimer;
+            if (t < 1.5) {
+              const prog = t / 1.5;
+              setStimulus(30 + 110 * prog, 40 + 55 * prog, -80 * prog);
+            } else if (t < 3.4) {
+              const prog = (t - 1.5) / 1.9;
+              setStimulus(140 + 110 * prog, 95, -80 - 70 * prog);
+            } else if (t < 4.1) {
+              const prog = 1.0 - (t - 3.4) / 0.7;
+              setStimulus(250 * prog, 95 * prog, -150 * prog);
+            } else {
+              setStimulus(0, 0, 0);
+              if (t > 5.5) {
+                scenario = "manual";
+                resetVesselBtn();
+              }
             }
           }
         }
+
+        Physics.update(dt, FPGA.driveFreq, FPGA.dacVrms, FPGA.powerActive);
+        FPGA.step(dt, Physics.phase_deg, Physics.amplitude_um, Physics.impedance_mag, Physics.fs);
+
+        history.time.shift(); history.time.push(simTime);
+        history.fs_target.shift(); history.fs_target.push(Physics.fs);
+        history.drive_f.shift(); history.drive_f.push(FPGA.driveFreq);
+        history.phase.shift(); history.phase.push(FPGA.powerActive ? Physics.phase_deg : 0.0);
+        history.dac_v.shift(); history.dac_v.push(FPGA.dacVrms);
+        history.amplitude.shift(); history.amplitude.push(Physics.amplitude_um);
+        history.itot.shift(); history.itot.push(Physics.itot_rms);
+        history.zmag.shift(); history.zmag.push(Physics.impedance_mag);
+
+        updateTelemetryUI();
       }
 
-      Physics.update(dt, FPGA.driveFreq, FPGA.dacVrms, FPGA.powerActive);
-      FPGA.step(dt, Physics.phase_deg, Physics.amplitude_um, Physics.impedance_mag, Physics.fs);
-
-      history.time.shift(); history.time.push(simTime);
-      history.fs_target.shift(); history.fs_target.push(Physics.fs);
-      history.drive_f.shift(); history.drive_f.push(FPGA.driveFreq);
-      history.phase.shift(); history.phase.push(FPGA.powerActive ? Physics.phase_deg : 0.0);
-      history.dac_v.shift(); history.dac_v.push(FPGA.dacVrms);
-      history.amplitude.shift(); history.amplitude.push(Physics.amplitude_um);
-      history.itot.shift(); history.itot.push(Physics.itot_rms);
-      history.zmag.shift(); history.zmag.push(Physics.impedance_mag);
-
-      updateTelemetryUI();
-      renderKnifeGraphic();
-      renderRfInspector();
-      renderScopeGraphic();
+      renderKnifeGraphic(isPaused);
+      renderRfInspector(isPaused);
+      renderScopeGraphic(isPaused);
 
       requestAnimationFrame(loop);
     }
@@ -1348,7 +1373,7 @@
       stallAlert.style.display = (FPGA.powerActive && FPGA.isStalled) ? 'block' : 'none';
     }
 
-    function renderKnifeGraphic() {
+    function renderKnifeGraphic(isPaused) {
       const w = knifeCanvas.width;
       const h = knifeCanvas.height;
       knifeCtx.clearRect(0, 0, w, h);
@@ -1396,7 +1421,7 @@
       knifeCtx.fillText('Titanium Waveguide (λ/2 Horn)', (hornStart + hornEnd)/2 - 75, midY - 12);
 
       // 3. Blade Tip Vibration
-      const vib = FPGA.powerActive ? (Math.sin(simTime * 35.0) * (Physics.amplitude_um / 12.0)) : 0.0;
+      const vib = (FPGA.powerActive && !isPaused) ? (Math.sin(simTime * 35.0) * (Physics.amplitude_um / 12.0)) : 0.0;
       const tipX = hornEnd;
       const tipLen = 50 + vib;
       knifeCtx.fillStyle = '#e2e8f0';
@@ -1453,7 +1478,7 @@
       knifeCtx.restore();
     }
 
-    function renderRfInspector() {
+    function renderRfInspector(isPaused) {
       const w = rfCanvas.width;
       const h = rfCanvas.height;
       rfCtx.clearRect(0, 0, w, h);
@@ -1577,6 +1602,18 @@
           rfCtx.lineTo(pxZeroI, midY - 20);
           rfCtx.stroke();
         }
+      if (isPaused) {
+        rfCtx.save();
+        rfCtx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        rfCtx.fillRect(cw - 165, 8, 155, 24);
+        rfCtx.strokeStyle = '#f59e0b';
+        rfCtx.lineWidth = 1;
+        rfCtx.strokeRect(cw - 165, 8, 155, 24);
+        rfCtx.fillStyle = '#fbbf24';
+        rfCtx.font = 'bold 11.5px Segoe UI';
+        rfCtx.textAlign = 'center';
+        rfCtx.fillText('⏸ DSO HOLD (已凍結)', cw - 87, 24);
+        rfCtx.restore();
       }
 
       rfCtx.restore();
@@ -1601,7 +1638,7 @@
         `FTW: ${ftw.toLocaleString()} (0x${ftw.toString(16).toUpperCase()})`;
     }
 
-    function renderScopeGraphic() {
+    function renderScopeGraphic(isPaused) {
       const w = scopeCanvas.width;
       const h = scopeCanvas.height;
       scopeCtx.clearRect(0, 0, w, h);
@@ -1754,6 +1791,32 @@
       scopeCtx.font = 'bold 11px Segoe UI';
       scopeCtx.fillText(`◀ 水平時間軸 (Timebase: ${(currentWindowSec / 10 * 1000).toFixed(0)} ms/div, 視窗總長: ${currentWindowSec.toFixed(1)}s) ▶`, marginL + plotW / 2, timeAxisY);
       scopeCtx.textAlign = 'left';
+
+      if (isPaused) {
+        scopeCtx.save();
+        scopeCtx.fillStyle = 'rgba(239, 68, 68, 0.08)';
+        scopeCtx.fillRect(marginL, y1, plotW, (y4 + subH) - y1);
+        scopeCtx.strokeStyle = '#f59e0b';
+        scopeCtx.lineWidth = 1.5;
+        scopeCtx.strokeRect(marginL, y1, plotW, (y4 + subH) - y1);
+
+        // Overlay Badge
+        const badgeW = 520;
+        const badgeH = 26;
+        const bx = marginL + (plotW - badgeW) / 2;
+        const by = y1 + 8;
+        scopeCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        scopeCtx.fillRect(bx, by, badgeW, badgeH);
+        scopeCtx.strokeStyle = '#f59e0b';
+        scopeCtx.lineWidth = 1;
+        scopeCtx.strokeRect(bx, by, badgeW, badgeH);
+
+        scopeCtx.fillStyle = '#fbbf24';
+        scopeCtx.font = 'bold 12px Segoe UI';
+        scopeCtx.textAlign = 'center';
+        scopeCtx.fillText('⏸ 採樣凍結中 (DSO HOLD / PAUSED) — 保持當前數據，可切換時基縮放檢視', marginL + plotW / 2, by + 17);
+        scopeCtx.restore();
+      }
 
       scopeCtx.restore();
     }
