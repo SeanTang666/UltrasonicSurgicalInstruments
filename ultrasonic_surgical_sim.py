@@ -93,7 +93,9 @@ class UltrasonicSurgicalPhysics:
             return
 
         # 7. When Power is ON: Calculate currents and mechanical stroke
-        self.motional_current = drive_voltage_vrms / max(1.0, Zm_mag)
+        target_im = drive_voltage_vrms / max(1.0, Zm_mag)
+        alpha = min(1.0, dt / 0.04)  # 40ms mechanical acoustic horn inertia filter
+        self.motional_current += (target_im - self.motional_current) * alpha
         self.total_current = self.motional_current
 
         # Mechanical tip displacement: Amplitude (um) ~ k_transducer * Im
@@ -123,14 +125,14 @@ class FpgaController:
 
         # PLL Tracking Controller
         self.pll_enabled = True
-        self.pll_kp = 6.5              # Proportional gain (Hz/deg)
-        self.pll_ki = 4.0              # Integral gain
+        self.pll_kp = 4.0              # Proportional gain (Hz/deg)
+        self.pll_ki = 2.0              # Integral gain
         self.pll_integral = 0.0
 
         # Amplitude / Power PI Controller
         self.amp_control_enabled = True
-        self.amp_kp = 0.7              # Volts / um
-        self.amp_ki = 1.2
+        self.amp_kp = 0.2              # Volts / um
+        self.amp_ki = 0.8
         self.amp_integral = 40.0
         self.max_dac_voltage = 180.0   # Hardware safety clamp
         self.min_dac_voltage = 10.0

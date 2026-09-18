@@ -112,7 +112,7 @@
     .chain-node {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      padding: 5px 10px;
+      padding: 5px 8px;
       border-radius: 6px;
       font-size: 0.72rem;
       font-weight: 600;
@@ -121,6 +121,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      flex: 1 1 110px;
+      min-width: 105px;
+      text-align: center;
+    }
+    .chain-node small {
+      font-variant-numeric: tabular-nums;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
     }
     .chain-node.active-fpga { border-color: var(--purple); color: #c4b5fd; background: rgba(139, 92, 246, 0.1); }
     .chain-node.active-driver { border-color: var(--cyan); color: #a5f3fc; background: rgba(0, 240, 255, 0.1); }
@@ -279,7 +287,7 @@
       justify-content: center;
     }
     .kpi-title { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
-    .kpi-value { font-size: 1.15rem; font-weight: 800; font-family: 'Courier New', Courier, monospace; margin-top: 2px; }
+    .kpi-value { font-size: 1.15rem; font-weight: 800; font-family: 'Courier New', Courier, monospace; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
     /* Oscilloscope Card */
     .scope-card {
@@ -587,6 +595,7 @@
         this.fs = this.f0_nominal + thermalShift + stiffnessShift;
 
         const RmTotal = this.Rm0 + (this.tissueDamping * this.clampPressure);
+        this.RmTotal = RmTotal;
         const ws = 2 * Math.PI * this.fs;
         const CmEff = 1.0 / (ws * ws * this.Lm);
 
@@ -609,7 +618,10 @@
           return;
         }
 
-        this.im_rms = driveVrms / Math.max(1.0, Zm_mag);
+        const target_im = driveVrms / Math.max(1.0, Zm_mag);
+        // Realistic mechanical inertia envelope filter of high-Q acoustic horn (tau = 40ms)
+        const alpha = Math.min(1.0, dt / 0.04);
+        this.im_rms += (target_im - this.im_rms) * alpha;
         this.itot_rms = this.im_rms;
 
         const k_disp = 85.0;
@@ -629,13 +641,13 @@
       targetAmplitude: 65.0,
       
       pllEnabled: true,
-      pllKp: 6.5,
-      pllKi: 4.0,
+      pllKp: 4.0,
+      pllKi: 2.0,
       pllIntegral: 0.0,
 
       ampEnabled: true,
-      ampKp: 0.7,
-      ampKi: 1.2,
+      ampKp: 0.2,
+      ampKi: 0.8,
       ampIntegral: 40.0,
       maxDacV: 180.0,
       minDacV: 10.0,
@@ -962,7 +974,7 @@
       document.getElementById('node-freq').textContent = `${FPGA.driveFreq.toFixed(0)} Hz`;
       document.getElementById('node-dac').textContent = `${FPGA.dacVrms.toFixed(1)} Vrms`;
       document.getElementById('node-amp').textContent = `${Physics.amplitude_um.toFixed(1)} μm`;
-      document.getElementById('node-rm').textContent = `Rm: ${Physics.impedance_mag.toFixed(0)} Ω`;
+      document.getElementById('node-rm').textContent = `Rm: ${Physics.RmTotal.toFixed(0)} Ω`;
       document.getElementById('node-phase').textContent = FPGA.powerActive ? `Δφ: ${Physics.phase_deg.toFixed(1)}°` : 'STANDBY';
 
       slideTemp.value = Physics.temperature;
