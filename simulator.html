@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETHICON™ GEN11 超音波手術刀即時閉環追頻與能量控制模擬系統</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f17;
+      --panel-bg: #131b26;
+      --card-bg: #1a2434;
+      --border-color: #243248;
+      --cyan: #00f0ff;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --pink: #ec4899;
+      --text-main: #f1f5f9;
+      --text-dim: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+    /* Header */
+    header {
+      background: linear-gradient(90deg, #111827, #1e293b);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-title h1 { font-size: 1.15rem; font-weight: 700; color: var(--cyan); letter-spacing: 0.5px; }
+    .header-title p { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-power {
+      background: #059669;
+      color: white;
+      border: 1px solid #10b981;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-power:hover { background: #10b981; }
+    .btn-power.standby {
+      background: #d97706;
+      border-color: #f59e0b;
+    }
+    .btn-power.standby:hover { background: #f59e0b; }
+
+    .btn-sweep {
+      background: #2563eb;
+      color: white;
+      border: 1px solid #3b82f6;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-sweep:hover { background: #3b82f6; }
+
+    .live-badge {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-badge.standby {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 1.5s infinite; }
+    .live-badge.standby .live-dot { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Signal Chain Ribbon */
+    .chain-flow {
+      background: #0f1622;
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow-x: auto;
+      gap: 8px;
+    }
+    .chain-node {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+      color: var(--text-dim);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .chain-node.active-fpga { border-color: var(--purple); color: #c4b5fd; background: rgba(139, 92, 246, 0.1); }
+    .chain-node.active-driver { border-color: var(--cyan); color: #a5f3fc; background: rgba(0, 240, 255, 0.1); }
+    .chain-node.active-blade { border-color: var(--green); color: #a7f3d0; background: rgba(16, 185, 129, 0.1); }
+    .chain-node.active-tissue { border-color: var(--red); color: #fca5a5; background: rgba(239, 68, 68, 0.1); }
+    .chain-node.active-sense { border-color: var(--yellow); color: #fde68a; background: rgba(245, 158, 11, 0.1); }
+    .chain-arrow { color: #475569; font-size: 0.8rem; font-weight: bold; }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      gap: 16px;
+      padding: 16px 24px;
+    }
+
+    /* Left Control Sidebar */
+    .sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .panel-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .panel-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 5px;
+    }
+
+    /* Button Presets */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn:hover { background: #26354d; border-color: #3b82f6; }
+    .btn.btn-primary {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border: none;
+      color: white;
+      font-size: 0.82rem;
+      padding: 9px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45); }
+    .btn.btn-danger { background: rgba(239, 68, 68, 0.2); border-color: var(--red); color: #fca5a5; }
+    .btn.btn-danger:hover { background: var(--red); color: white; }
+
+    /* Sliders */
+    .control-row { margin-bottom: 10px; }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      margin-bottom: 3px;
+    }
+    .control-label span.val { color: var(--cyan); font-weight: 700; font-family: monospace; }
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #243248;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--cyan);
+    }
+
+    /* Switch toggle */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+    }
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider-toggle {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155; transition: .3s; border-radius: 20px;
+    }
+    .slider-toggle:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+      background-color: white; transition: .3s; border-radius: 50%;
+    }
+    input:checked + .slider-toggle { background-color: var(--green); }
+    input:checked + .slider-toggle:before { transform: translateX(18px); }
+
+    /* Right Main Display Area */
+    .display-area { display: flex; flex-direction: column; gap: 12px; }
+
+    /* Physical Animation Canvas Box */
+    .anim-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      position: relative;
+    }
+    #knifeCanvas {
+      width: 100%;
+      height: 150px;
+      background: #080d14;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* Telemetry KPI Cards */
+    .telemetry-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .kpi-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .kpi-title { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+    .kpi-value { font-size: 1.15rem; font-weight: 800; font-family: 'Courier New', Courier, monospace; margin-top: 2px; }
+
+    /* Oscilloscope Card */
+    .scope-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #scopeCanvas {
+      width: 100%;
+      height: 380px;
+      background: #06090e;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* Alert Banner */
+    .att-banner {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(16, 185, 129, 0.95);
+      color: #022c22;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+      display: none;
+      animation: bounce 0.4s ease;
+    }
+    .stall-banner {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(239, 68, 68, 0.95);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
+      display: none;
+      animation: bounce 0.4s ease;
+    }
+    @keyframes bounce { 0% { transform: scale(0.8); } 70% { transform: scale(1.05); } 100% { transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="header-title">
+      <h1>ETHICON™ GEN11 Architecture - Ultrasonic Surgical Closed-Loop Tracking Simulator</h1>
+      <p>即時硬體迴路信號鏈模擬：SOC UI ⇄ FPGA DDS/PLL ⇄ DAC ⇄ Driver ⇄ Transducer ⇄ Tissue ⇄ Sensing ⇄ ADC ⇄ FPGA</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-power" id="btnPowerSwitch">⚡ 腳踏開關: 激發中 (ACTIVE: ON)</button>
+      <button class="btn-sweep" id="btnHeaderSweep">🔄 故障重置與尋頻 (Reset & Re-Sweep)</button>
+      <div class="live-badge" id="liveBadge">
+        <div class="live-dot"></div>
+        <span id="liveBadgeText">ACTIVE</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Signal Chain Ribbon -->
+  <div class="chain-flow">
+    <div class="chain-node">
+      <span>SOC UI & Target</span>
+      <small style="color:#60a5fa">Power Level 1~5</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node active-fpga">
+      <span>FPGA DDS & PLL</span>
+      <small style="color:#c4b5fd" id="node-freq">55,500 Hz</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node active-driver">
+      <span>DAC & Power Amp</span>
+      <small style="color:#a5f3fc" id="node-dac">40.0 Vrms</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node active-blade">
+      <span>Piezo + Waveguide</span>
+      <small style="color:#a7f3d0" id="node-amp">65.0 μm Tip</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node active-tissue">
+      <span>Human Tissue Load</span>
+      <small style="color:#fca5a5" id="node-rm">Rm: 18 Ω</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node active-sense">
+      <span>V / I Current Sense</span>
+      <small style="color:#fde68a" id="node-phase">Δφ: 0.0°</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node">
+      <span>High-Speed ADC</span>
+      <small style="color:#94a3b8">IQ Demod</small>
+    </div>
+    <div class="chain-arrow">➔</div>
+    <div class="chain-node active-fpga">
+      <span>FPGA Feedback</span>
+      <small style="color:#c4b5fd">Loop Closed</small>
+    </div>
+  </div>
+
+  <!-- Main Simulator Layout -->
+  <div class="main-grid">
+    <!-- Left Sidebar: Controls & Arbitrary Stimulus -->
+    <div class="sidebar">
+      
+      <!-- 1. SOC Control -->
+      <div class="panel-card">
+        <div class="panel-title">⚙ 1. SOC UI & 控制演算法配置</div>
+        <div class="control-row">
+          <div class="control-label">
+            <span>切割能量檔位 (Power Level):</span>
+            <span class="val" id="pwr-level-disp">Level 3 (65 μm)</span>
+          </div>
+          <input type="range" id="pwrSlider" min="1" max="5" step="1" value="3">
+        </div>
+
+        <div class="switch-row">
+          <span>FPGA 共振追頻環路 (PLL Tracking):</span>
+          <label class="toggle">
+            <input type="checkbox" id="pllToggle" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+
+        <div class="switch-row">
+          <span>恆定機械振幅閉環 (Constant Amplitude PI):</span>
+          <label class="toggle">
+            <input type="checkbox" id="ampToggle" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 2. Clinical Scenario Stimulus -->
+      <div class="panel-card">
+        <div class="panel-title">🩸 2. 臨床實際組織切割時序 (Stimulus)</div>
+        <div class="scenario-grid">
+          <button class="btn btn-primary" id="btnVessel">▶ 血管閉合切斷全流程 (Seal & Transect)</button>
+          <button class="btn" id="btnAir">空載運轉 (Air Idle)</button>
+          <button class="btn" id="btnFat">夾切軟脂肪 (Fat)</button>
+          <button class="btn" id="btnMuscle">重負荷厚肌肉 (Muscle)</button>
+          <button class="btn btn-danger" id="btnStall">⚠ 碰骨/金屬夾失諧 (Stall)</button>
+        </div>
+        <p style="font-size:0.7rem; color:var(--text-dim); line-height:1.3;">
+          點擊「碰骨失諧 (Stall)」後若想恢復，可直接點選「空載運轉」、「夾切脂肪」或按頂部「🔄 故障重置與尋頻」，系統即刻自愈鎖定！
+        </p>
+      </div>
+
+      <!-- 3. Arbitrary Variables Adjustment -->
+      <div class="panel-card">
+        <div class="panel-title">🎛 3. 手動即時微調任意變因 (Live Variables)</div>
+        
+        <div class="control-row">
+          <div class="control-label">
+            <span>組織聲阻尼 (Tissue Damping Rm, Ω):</span>
+            <span class="val" id="val-damping">0 Ω</span>
+          </div>
+          <input type="range" id="slideDamping" min="0" max="350" step="1" value="0">
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>刀鉗咬合夾持力 (Clamp Pressure):</span>
+            <span class="val" id="val-clamp">0 %</span>
+          </div>
+          <input type="range" id="slideClamp" min="0" max="100" step="1" value="0">
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>組織剛性共振頻偏 (Stiffness Shift Δfs):</span>
+            <span class="val" id="val-stiffness">0 Hz</span>
+          </div>
+          <input type="range" id="slideStiffness" min="-400" max="200" step="1" value="0">
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>換能器工作溫度 (Transducer Temp):</span>
+            <span class="val" id="val-temp" style="color:var(--yellow)">25.0 °C</span>
+          </div>
+          <input type="range" id="slideTemp" min="25" max="130" step="1" value="25">
+        </div>
+
+        <div class="control-row" id="manual-freq-box" style="opacity: 0.5;">
+          <div class="control-label">
+            <span>手動固定輸出頻率 (僅在 PLL OFF 時有效):</span>
+            <span class="val" id="val-manual-f" style="color:var(--red)">55,500 Hz</span>
+          </div>
+          <input type="range" id="slideManualF" min="54000" max="57000" step="5" value="55500" disabled>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Main Interactive Area -->
+    <div class="display-area">
+      
+      <!-- Physical Blade + Tissue Canvas -->
+      <div class="anim-card">
+        <div class="panel-title" style="margin-bottom:6px;">
+          🔬 手術刀咬合組織與壓電換能器動態微觀模擬 (Physical Acoustic Domain)
+        </div>
+        <canvas id="knifeCanvas"></canvas>
+        <div class="att-banner" id="attAlert">✔ ATT TRANSECTION COMPLETE! (組織切斷完成 - 自動降載保護)</div>
+        <div class="stall-banner" id="stallAlert">⚠ ACOUSTIC OVERLOAD / STALL (碰骨失諧保護 - 自動尋頻自愈中)</div>
+      </div>
+
+      <!-- Real-Time Telemetry Bar -->
+      <div class="telemetry-row">
+        <div class="kpi-card">
+          <div class="kpi-title">機械固有諧振頻率 (Target fs)</div>
+          <div class="kpi-value" id="kpi-fs" style="color:var(--yellow)">55,500 Hz</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">FPGA DDS 輸出頻率 (Drive f)</div>
+          <div class="kpi-value" id="kpi-drivef" style="color:var(--cyan)">55,500 Hz</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">阻抗相位差 (V vs I Phase Δφ)</div>
+          <div class="kpi-value" id="kpi-phase" style="color:var(--green)">+0.00 °</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">刀尖縱向振動振幅 (Tip Stroke)</div>
+          <div class="kpi-value" id="kpi-amp" style="color:var(--pink)">65.0 μm</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">DAC 驅動電壓 (Drive Voltage)</div>
+          <div class="kpi-value" id="kpi-dac" style="color:var(--cyan)">40.0 Vrms</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">驅動總電流 (Total Current)</div>
+          <div class="kpi-value" id="kpi-curr" style="color:var(--green)">0.45 A</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">即時輸出總功率 (Active Power)</div>
+          <div class="kpi-value" id="kpi-power" style="color:#fb7185">18.0 W</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">總等效阻抗 (|Z| Magnitude)</div>
+          <div class="kpi-value" id="kpi-zmag" style="color:var(--purple)">18.0 Ω</div>
+        </div>
+      </div>
+
+      <!-- Real-Time Multi-Trace Oscilloscope -->
+      <div class="scope-card">
+        <div class="panel-title" style="margin-bottom:6px;">
+          📊 閉環即時多通道示波器 (Frequency Tracking, Phase Error, Voltage & Amplitude PI Control)
+        </div>
+        <canvas id="scopeCanvas"></canvas>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // Physical & Electrical System Models
+    // -------------------------------------------------------------
+    const Physics = {
+      f0_nominal: 55500.0,
+      C0: 2.8e-9,
+      Lm: 0.35,
+      Rm0: 18.0,
+      tempCoeff: -8.5,
+      
+      temperature: 25.0,
+      tissueDamping: 0.0,
+      clampPressure: 0.0,
+      tissueStiffness: 0.0,
+
+      fs: 55500.0,
+      amplitude_um: 0.0,
+      im_rms: 0.0,
+      itot_rms: 0.0,
+      impedance_mag: 18.0,
+      phase_deg: 0.0,
+      active_power_w: 0.0,
+
+      update(dt, driveFreq, driveVrms, powerActive) {
+        if (powerActive) {
+          const pLoss = (this.im_rms ** 2) * this.Rm0;
+          const cooling = (this.temperature - 25.0) * 0.4;
+          this.temperature = Math.max(25.0, Math.min(140.0, this.temperature + (pLoss * 0.15 - cooling) * dt));
+        } else {
+          const cooling = (this.temperature - 25.0) * 0.4;
+          this.temperature = Math.max(25.0, this.temperature - cooling * dt);
+        }
+
+        const thermalShift = (this.temperature - 25.0) * this.tempCoeff;
+        const stiffnessShift = this.tissueStiffness * this.clampPressure;
+        this.fs = this.f0_nominal + thermalShift + stiffnessShift;
+
+        const RmTotal = this.Rm0 + (this.tissueDamping * this.clampPressure);
+        const ws = 2 * Math.PI * this.fs;
+        const CmEff = 1.0 / (ws * ws * this.Lm);
+
+        const w = 2 * Math.PI * Math.max(1000.0, driveFreq);
+        const X_Lm = w * this.Lm;
+        const X_Cm = 1.0 / (w * CmEff);
+        const X_m = X_Lm - X_Cm;
+
+        const Zm_sq = RmTotal * RmTotal + X_m * X_m;
+        const Zm_mag = Math.sqrt(Zm_sq);
+
+        this.impedance_mag = Zm_mag;
+        this.phase_deg = Math.atan2(X_m, RmTotal) * (180.0 / Math.PI);
+
+        if (!powerActive) {
+          this.amplitude_um = 0.0;
+          this.itot_rms = 0.0;
+          this.im_rms = 0.0;
+          this.active_power_w = 0.0;
+          return;
+        }
+
+        this.im_rms = driveVrms / Math.max(1.0, Zm_mag);
+        this.itot_rms = this.im_rms;
+
+        const k_disp = 85.0;
+        this.amplitude_um = this.im_rms * k_disp;
+        this.active_power_w = driveVrms * this.itot_rms * Math.cos(this.phase_deg * Math.PI / 180.0);
+      }
+    };
+
+    // -------------------------------------------------------------
+    // FPGA Controller Simulation
+    // -------------------------------------------------------------
+    const FPGA = {
+      powerActive: true,
+      driveFreq: 55500.0,
+      dacVrms: 40.0,
+      targetPhase: 0.0,
+      targetAmplitude: 65.0,
+      
+      pllEnabled: true,
+      pllKp: 6.5,
+      pllKi: 4.0,
+      pllIntegral: 0.0,
+
+      ampEnabled: true,
+      ampKp: 0.7,
+      ampKi: 1.2,
+      ampIntegral: 40.0,
+      maxDacV: 180.0,
+      minDacV: 10.0,
+
+      isStalled: false,
+      stallTimer: 0.0,
+      autoSweepCooldown: 0.0,
+
+      prevZ: 18.0,
+      dZ_dt: 0.0,
+      transectionAlertTimer: 0.0,
+
+      resetAndSweep(realFs) {
+        this.driveFreq = realFs;
+        this.pllIntegral = 0.0;
+        this.ampIntegral = 40.0;
+        this.isStalled = false;
+        this.stallTimer = 0.0;
+        this.transectionAlertTimer = 0.0;
+      },
+
+      step(dt, sensedPhase, sensedAmp, sensedZ, realFs) {
+        if (!this.powerActive) {
+          this.dacVrms = 0.0;
+          this.pllIntegral = 0.0;
+          this.isStalled = false;
+          return;
+        }
+
+        // 1. Stall / Overload detection
+        if (sensedZ > 260.0 || Math.abs(sensedPhase) > 55.0) {
+          this.stallTimer += dt;
+          if (this.stallTimer > 0.15) {
+            this.isStalled = true;
+          }
+        } else {
+          this.stallTimer = Math.max(0.0, this.stallTimer - dt * 2.0);
+          if (this.stallTimer === 0.0 && sensedZ < 200.0) {
+            this.isStalled = false;
+          }
+        }
+
+        // 2. Auto-Sweep Recovery
+        if (this.isStalled) {
+          this.autoSweepCooldown += dt;
+          if (sensedZ < 220.0 || this.autoSweepCooldown > 0.8) {
+            this.resetAndSweep(realFs);
+            this.autoSweepCooldown = 0.0;
+          }
+        }
+
+        // 3. PLL Loop (Negative Feedback)
+        if (this.pllEnabled) {
+          const phaseError = sensedPhase - this.targetPhase;
+          this.pllIntegral += phaseError * dt;
+          this.pllIntegral = Math.max(-800, Math.min(800, this.pllIntegral));
+          
+          let freqCorrection = - (this.pllKp * phaseError + this.pllKi * this.pllIntegral);
+          freqCorrection = Math.max(-2500, Math.min(2500, freqCorrection));
+          this.driveFreq += freqCorrection * dt;
+          this.driveFreq = Math.max(52500.0, Math.min(58000.0, this.driveFreq));
+        }
+
+        // 4. Amplitude PI
+        if (this.ampEnabled) {
+          if (this.isStalled) {
+            this.dacVrms = 60.0;
+          } else {
+            const ampError = this.targetAmplitude - sensedAmp;
+            this.ampIntegral += ampError * dt;
+            this.ampIntegral = Math.max(10.0, Math.min(this.maxDacV, this.ampIntegral));
+            const vCmd = (this.ampKp * ampError) + this.ampIntegral;
+            this.dacVrms = Math.max(this.minDacV, Math.min(this.maxDacV, vCmd));
+          }
+        }
+
+        // 5. ATT Detection
+        this.dZ_dt = (sensedZ - this.prevZ) / Math.max(0.001, dt);
+        this.prevZ = sensedZ;
+        if (sensedZ > 55.0 && this.dZ_dt < -150.0) {
+          this.transectionAlertTimer = 2.0;
+        }
+        if (this.transectionAlertTimer > 0) {
+          this.transectionAlertTimer -= dt;
+        }
+      }
+    };
+
+    // -------------------------------------------------------------
+    // History Buffers
+    // -------------------------------------------------------------
+    const BUF_LEN = 200;
+    const history = {
+      time: new Array(BUF_LEN).fill(0),
+      fs_target: new Array(BUF_LEN).fill(55500),
+      drive_f: new Array(BUF_LEN).fill(55500),
+      phase: new Array(BUF_LEN).fill(0),
+      dac_v: new Array(BUF_LEN).fill(40),
+      amplitude: new Array(BUF_LEN).fill(65),
+      itot: new Array(BUF_LEN).fill(0.45),
+      zmag: new Array(BUF_LEN).fill(18)
+    };
+
+    let simTime = 0.0;
+    let scenario = "manual";
+    let scenTimer = 0.0;
+
+    // -------------------------------------------------------------
+    // DOM Elements & Event Listeners
+    // -------------------------------------------------------------
+    const btnPowerSwitch = document.getElementById('btnPowerSwitch');
+    const btnHeaderSweep = document.getElementById('btnHeaderSweep');
+    const liveBadge = document.getElementById('liveBadge');
+    const liveBadgeText = document.getElementById('liveBadgeText');
+
+    const pwrSlider = document.getElementById('pwrSlider');
+    const pwrLevelDisp = document.getElementById('pwrLevelDisp');
+    const pllToggle = document.getElementById('pllToggle');
+    const ampToggle = document.getElementById('ampToggle');
+    const slideDamping = document.getElementById('slideDamping');
+    const slideClamp = document.getElementById('slideClamp');
+    const slideStiffness = document.getElementById('slideStiffness');
+    const slideTemp = document.getElementById('slideTemp');
+    const slideManualF = document.getElementById('slideManualF');
+    const manualFreqBox = document.getElementById('manual-freq-box');
+    const attAlert = document.getElementById('attAlert');
+    const stallAlert = document.getElementById('stallAlert');
+
+    // Generator Power Switch Toggle
+    btnPowerSwitch.addEventListener('click', () => {
+      FPGA.powerActive = !FPGA.powerActive;
+      if (FPGA.powerActive) {
+        btnPowerSwitch.innerHTML = "⚡ 腳踏開關: 激發中 (ACTIVE: ON)";
+        btnPowerSwitch.classList.remove('standby');
+        liveBadge.classList.remove('standby');
+        liveBadgeText.textContent = "ACTIVE";
+      } else {
+        btnPowerSwitch.innerHTML = "⏸ 腳踏放開: 待機 (STANDBY: OFF)";
+        btnPowerSwitch.classList.add('standby');
+        liveBadge.classList.add('standby');
+        liveBadgeText.textContent = "STANDBY";
+      }
+    });
+
+    btnHeaderSweep.addEventListener('click', () => {
+      FPGA.resetAndSweep(Physics.fs);
+    });
+
+    pwrSlider.addEventListener('input', (e) => {
+      const lvl = parseInt(e.target.value);
+      const ampTargets = [0, 45, 55, 65, 75, 85];
+      FPGA.targetAmplitude = ampTargets[lvl];
+      pwrLevelDisp.textContent = `Level ${lvl} (${FPGA.targetAmplitude} μm)`;
+    });
+
+    pllToggle.addEventListener('change', (e) => {
+      FPGA.pllEnabled = e.target.checked;
+      slideManualF.disabled = e.target.checked;
+      manualFreqBox.style.opacity = e.target.checked ? "0.5" : "1.0";
+    });
+
+    ampToggle.addEventListener('change', (e) => {
+      FPGA.ampEnabled = e.target.checked;
+    });
+
+    slideDamping.addEventListener('input', (e) => {
+      scenario = "manual";
+      Physics.tissueDamping = parseFloat(e.target.value);
+      document.getElementById('val-damping').textContent = `${e.target.value} Ω`;
+    });
+
+    slideClamp.addEventListener('input', (e) => {
+      scenario = "manual";
+      Physics.clampPressure = parseFloat(e.target.value) / 100.0;
+      document.getElementById('val-clamp').textContent = `${e.target.value} %`;
+    });
+
+    slideStiffness.addEventListener('input', (e) => {
+      scenario = "manual";
+      Physics.tissueStiffness = parseFloat(e.target.value);
+      document.getElementById('val-stiffness').textContent = `${e.target.value} Hz`;
+    });
+
+    slideTemp.addEventListener('input', (e) => {
+      Physics.temperature = parseFloat(e.target.value);
+      document.getElementById('val-temp').textContent = `${Physics.temperature.toFixed(1)} °C`;
+    });
+
+    slideManualF.addEventListener('input', (e) => {
+      if (!FPGA.pllEnabled) {
+        FPGA.driveFreq = parseFloat(e.target.value);
+        document.getElementById('val-manual-f').textContent = `${parseInt(e.target.value).toLocaleString()} Hz`;
+      }
+    });
+
+    // Preset Buttons
+    document.getElementById('btnAir').addEventListener('click', () => {
+      scenario = "manual";
+      setStimulus(0, 0, 0);
+      FPGA.resetAndSweep(Physics.fs);
+    });
+
+    document.getElementById('btnFat').addEventListener('click', () => {
+      scenario = "manual";
+      setStimulus(50, 60, -40);
+      FPGA.resetAndSweep(Physics.fs);
+    });
+
+    document.getElementById('btnMuscle').addEventListener('click', () => {
+      scenario = "manual";
+      setStimulus(160, 90, -140);
+      FPGA.resetAndSweep(Physics.fs);
+    });
+
+    document.getElementById('btnStall').addEventListener('click', () => {
+      scenario = "manual";
+      setStimulus(290, 100, -350);
+    });
+
+    document.getElementById('btnVessel').addEventListener('click', () => {
+      scenario = "vessel";
+      scenTimer = 0.0;
+    });
+
+    function setStimulus(damping, clamp, stiffness) {
+      Physics.tissueDamping = damping;
+      Physics.clampPressure = clamp / 100.0;
+      Physics.tissueStiffness = stiffness;
+
+      slideDamping.value = damping;
+      slideClamp.value = clamp;
+      slideStiffness.value = stiffness;
+
+      document.getElementById('val-damping').textContent = `${damping} Ω`;
+      document.getElementById('val-clamp').textContent = `${clamp} %`;
+      document.getElementById('val-stiffness').textContent = `${stiffness} Hz`;
+    }
+
+    // -------------------------------------------------------------
+    // Main 60 FPS Loop
+    // -------------------------------------------------------------
+    const dt = 0.025;
+    const knifeCanvas = document.getElementById('knifeCanvas');
+    const knifeCtx = knifeCanvas.getContext('2d');
+    const scopeCanvas = document.getElementById('scopeCanvas');
+    const scopeCtx = scopeCanvas.getContext('2d');
+
+    function resizeCanvases() {
+      knifeCanvas.width = knifeCanvas.clientWidth * window.devicePixelRatio;
+      knifeCanvas.height = knifeCanvas.clientHeight * window.devicePixelRatio;
+      scopeCanvas.width = scopeCanvas.clientWidth * window.devicePixelRatio;
+      scopeCanvas.height = scopeCanvas.clientHeight * window.devicePixelRatio;
+    }
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    function loop() {
+      simTime += dt;
+
+      if (scenario === "vessel") {
+        scenTimer += dt;
+        const t = scenTimer;
+        if (t < 1.5) {
+          const prog = t / 1.5;
+          setStimulus(30 + 110 * prog, 40 + 55 * prog, -80 * prog);
+        } else if (t < 3.4) {
+          const prog = (t - 1.5) / 1.9;
+          setStimulus(140 + 110 * prog, 95, -80 - 70 * prog);
+        } else if (t < 4.1) {
+          const prog = 1.0 - (t - 3.4) / 0.7;
+          setStimulus(250 * prog, 95 * prog, -150 * prog);
+        } else {
+          setStimulus(0, 0, 0);
+          if (t > 5.5) scenario = "manual";
+        }
+      }
+
+      Physics.update(dt, FPGA.driveFreq, FPGA.dacVrms, FPGA.powerActive);
+      FPGA.step(dt, Physics.phase_deg, Physics.amplitude_um, Physics.impedance_mag, Physics.fs);
+
+      history.time.shift(); history.time.push(simTime);
+      history.fs_target.shift(); history.fs_target.push(Physics.fs);
+      history.drive_f.shift(); history.drive_f.push(FPGA.driveFreq);
+      history.phase.shift(); history.phase.push(FPGA.powerActive ? Physics.phase_deg : 0.0);
+      history.dac_v.shift(); history.dac_v.push(FPGA.dacVrms);
+      history.amplitude.shift(); history.amplitude.push(Physics.amplitude_um);
+      history.itot.shift(); history.itot.push(Physics.itot_rms);
+      history.zmag.shift(); history.zmag.push(Physics.impedance_mag);
+
+      updateTelemetryUI();
+      renderKnifeGraphic();
+      renderScopeGraphic();
+
+      requestAnimationFrame(loop);
+    }
+
+    function updateTelemetryUI() {
+      document.getElementById('kpi-fs').textContent = `${Physics.fs.toFixed(1)} Hz`;
+      document.getElementById('kpi-drivef').textContent = `${FPGA.driveFreq.toFixed(1)} Hz`;
+      
+      const phaseEl = document.getElementById('kpi-phase');
+      const ampEl = document.getElementById('kpi-amp');
+
+      if (!FPGA.powerActive) {
+        phaseEl.textContent = "STANDBY";
+        phaseEl.style.color = "var(--yellow)";
+        ampEl.textContent = "0.0 μm";
+        ampEl.style.color = "var(--text-dim)";
+        document.getElementById('kpi-dac').textContent = "0.0 Vrms";
+        document.getElementById('kpi-curr').textContent = "0.00 A";
+        document.getElementById('kpi-power').textContent = "0.0 W";
+      } else {
+        phaseEl.textContent = `${Physics.phase_deg >= 0 ? '+' : ''}${Physics.phase_deg.toFixed(2)} °`;
+        phaseEl.style.color = Math.abs(Physics.phase_deg) < 5.0 ? 'var(--green)' : (Math.abs(Physics.phase_deg) < 20 ? 'var(--yellow)' : 'var(--red)');
+        ampEl.textContent = `${Physics.amplitude_um.toFixed(1)} μm`;
+        ampEl.style.color = Math.abs(Physics.amplitude_um - FPGA.targetAmplitude) < 5.0 ? 'var(--cyan)' : 'var(--pink)';
+        document.getElementById('kpi-dac').textContent = `${FPGA.dacVrms.toFixed(1)} Vrms`;
+        document.getElementById('kpi-curr').textContent = `${Physics.itot_rms.toFixed(2)} A`;
+        document.getElementById('kpi-power').textContent = `${Physics.active_power_w.toFixed(1)} W`;
+      }
+
+      document.getElementById('kpi-zmag').textContent = `${Physics.impedance_mag.toFixed(1)} Ω`;
+
+      document.getElementById('node-freq').textContent = `${FPGA.driveFreq.toFixed(0)} Hz`;
+      document.getElementById('node-dac').textContent = `${FPGA.dacVrms.toFixed(1)} Vrms`;
+      document.getElementById('node-amp').textContent = `${Physics.amplitude_um.toFixed(1)} μm`;
+      document.getElementById('node-rm').textContent = `Rm: ${Physics.impedance_mag.toFixed(0)} Ω`;
+      document.getElementById('node-phase').textContent = FPGA.powerActive ? `Δφ: ${Physics.phase_deg.toFixed(1)}°` : 'STANDBY';
+
+      slideTemp.value = Physics.temperature;
+      document.getElementById('val-temp').textContent = `${Physics.temperature.toFixed(1)} °C`;
+
+      attAlert.style.display = (FPGA.powerActive && FPGA.transectionAlertTimer > 0) ? 'block' : 'none';
+      stallAlert.style.display = (FPGA.powerActive && FPGA.isStalled) ? 'block' : 'none';
+    }
+
+    function renderKnifeGraphic() {
+      const w = knifeCanvas.width;
+      const h = knifeCanvas.height;
+      knifeCtx.clearRect(0, 0, w, h);
+
+      const dpr = window.devicePixelRatio || 1;
+      knifeCtx.save();
+      knifeCtx.scale(dpr, dpr);
+      const cw = w / dpr;
+      const ch = h / dpr;
+      const midY = ch / 2;
+
+      // 1. Handpiece Piezo PZT Stack
+      const pztX = 30;
+      const pztW = 120;
+      const pztH = 64;
+      knifeCtx.fillStyle = '#1e293b';
+      knifeCtx.strokeStyle = '#475569';
+      knifeCtx.lineWidth = 2;
+      knifeCtx.strokeRect(pztX, midY - pztH/2, pztW, pztH);
+      knifeCtx.fillRect(pztX, midY - pztH/2, pztW, pztH);
+
+      for (let i = 0; i < 4; i++) {
+        knifeCtx.fillStyle = (i % 2 === 0) ? '#0284c7' : '#818cf8';
+        knifeCtx.fillRect(pztX + 12 + i * 26, midY - pztH/2 + 6, 16, pztH - 12);
+      }
+      knifeCtx.fillStyle = '#94a3b8';
+      knifeCtx.font = '10px Segoe UI';
+      knifeCtx.fillText('Piezo PZT Stack (4 Rings)', pztX + 5, midY - pztH/2 - 6);
+
+      // 2. Titanium Waveguide Horn
+      const hornStart = pztX + pztW;
+      const hornEnd = cw - 260;
+      knifeCtx.fillStyle = '#64748b';
+      knifeCtx.strokeStyle = '#94a3b8';
+      knifeCtx.beginPath();
+      knifeCtx.moveTo(hornStart, midY - 24);
+      knifeCtx.lineTo(hornEnd, midY - 8);
+      knifeCtx.lineTo(hornEnd, midY + 8);
+      knifeCtx.lineTo(hornStart, midY + 24);
+      knifeCtx.closePath();
+      knifeCtx.fill();
+      knifeCtx.stroke();
+      knifeCtx.fillStyle = '#94a3b8';
+      knifeCtx.fillText('Titanium Waveguide (Acoustic Velocity Transformer)', (hornStart + hornEnd)/2 - 110, midY - 18);
+
+      // 3. Blade Tip Vibration
+      const vib = FPGA.powerActive ? (Math.sin(simTime * 35.0) * (Physics.amplitude_um / 12.0)) : 0.0;
+      const tipX = hornEnd;
+      const tipLen = 70 + vib;
+      knifeCtx.fillStyle = '#e2e8f0';
+      knifeCtx.strokeStyle = '#00f0ff';
+      knifeCtx.lineWidth = 2;
+      knifeCtx.beginPath();
+      knifeCtx.moveTo(tipX, midY - 7);
+      knifeCtx.lineTo(tipX + tipLen, midY - 2);
+      knifeCtx.lineTo(tipX + tipLen + 10, midY);
+      knifeCtx.lineTo(tipX + tipLen, midY + 2);
+      knifeCtx.lineTo(tipX, midY + 7);
+      knifeCtx.closePath();
+      knifeCtx.fill();
+      knifeCtx.stroke();
+
+      // 4. Teflon Clamp Pad
+      const clampGap = Math.max(5, 36 * (1.0 - Physics.clampPressure));
+      const padY = midY - clampGap - 12;
+      knifeCtx.fillStyle = '#f8fafc';
+      knifeCtx.strokeStyle = '#cbd5e1';
+      knifeCtx.fillRect(tipX + 5, padY, 70, 10);
+      knifeCtx.strokeRect(tipX + 5, padY, 70, 10);
+      knifeCtx.fillStyle = '#cbd5e1';
+      knifeCtx.font = '9px Segoe UI';
+      knifeCtx.fillText('PTFE Pad', tipX + 18, padY - 4);
+
+      // 5. Human Tissue
+      if (Physics.clampPressure > 0.04) {
+        const tissueH = Math.max(3, clampGap + 2);
+        knifeCtx.fillStyle = Physics.tissueDamping > 50 ? '#dc2626' : '#f87171';
+        knifeCtx.beginPath();
+        knifeCtx.ellipse(tipX + 38, midY - tissueH/2 + 2, 28, tissueH/2 + 2, 0, 0, Math.PI * 2);
+        knifeCtx.fill();
+
+        if (FPGA.powerActive && Physics.active_power_w > 15) {
+          knifeCtx.fillStyle = 'rgba(224, 242, 254, 0.8)';
+          for (let b = 0; b < 5; b++) {
+            const bx = tipX + 15 + b * 11 + Math.sin(simTime * 8 + b) * 4;
+            const by = midY - 18 - b * 7;
+            knifeCtx.beginPath();
+            knifeCtx.arc(bx, by, 2.5, 0, Math.PI * 2);
+            knifeCtx.fill();
+          }
+          knifeCtx.fillStyle = '#e0f2fe';
+          knifeCtx.font = 'italic 9px Segoe UI';
+          knifeCtx.fillText('Cavitation Vapor', tipX + 22, midY - 38);
+        }
+      }
+
+      knifeCtx.fillStyle = '#00f0ff';
+      knifeCtx.font = 'bold 11px Segoe UI';
+      knifeCtx.fillText(`↔ Tip Stroke: ${Physics.amplitude_um.toFixed(1)} μm pk-pk`, tipX + 88, midY + 18);
+
+      knifeCtx.restore();
+    }
+
+    function renderScopeGraphic() {
+      const w = scopeCanvas.width;
+      const h = scopeCanvas.height;
+      scopeCtx.clearRect(0, 0, w, h);
+
+      const dpr = window.devicePixelRatio || 1;
+      scopeCtx.save();
+      scopeCtx.scale(dpr, dpr);
+      const cw = w / dpr;
+      const ch = h / dpr;
+
+      const subH = ch / 3;
+      const marginL = 60;
+      const marginR = 20;
+      const plotW = cw - marginL - marginR;
+
+      // Scope 1: Frequency Tracking (54.0 kHz ~ 57.0 kHz)
+      drawSubScopeFrame(scopeCtx, marginL, 10, plotW, subH - 18, 
+        'CH1: 共振頻率追蹤 (Target fs vs FPGA DDS Driving Frequency)', '57.0 kHz', '54.0 kHz');
+      
+      const fMin = 54000, fMax = 57000;
+      drawTrace(scopeCtx, history.fs_target, marginL, 10, plotW, subH - 18, fMin, fMax, '#f59e0b', [4, 3]);
+      drawTrace(scopeCtx, history.drive_f, marginL, 10, plotW, subH - 18, fMin, fMax, '#00f0ff', []);
+      
+      scopeCtx.fillStyle = '#f59e0b';
+      scopeCtx.font = '10px Segoe UI';
+      scopeCtx.fillText('-- 刀尖固有諧振頻率 (Target fs, 含組織與溫漂)', cw - 260, 26);
+      scopeCtx.fillStyle = '#00f0ff';
+      scopeCtx.fillText('— FPGA DDS 輸出驅動頻率 (Drive f)', cw - 260, 40);
+
+      // Scope 2: Phase Angle Difference (-50° ~ +50°)
+      const y2 = subH + 4;
+      drawSubScopeFrame(scopeCtx, marginL, y2, plotW, subH - 18, 
+        'CH2: 阻抗相位差 (V vs I Phase Angle - 目標 0° 串聯諧振)', '+50°', '-50°');
+      
+      scopeCtx.strokeStyle = '#334155';
+      scopeCtx.lineWidth = 1;
+      scopeCtx.setLineDash([2, 4]);
+      scopeCtx.beginPath();
+      scopeCtx.moveTo(marginL, y2 + (subH - 18)/2);
+      scopeCtx.lineTo(marginL + plotW, y2 + (subH - 18)/2);
+      scopeCtx.stroke();
+      scopeCtx.setLineDash([]);
+
+      drawTrace(scopeCtx, history.phase, marginL, y2, plotW, subH - 18, -50, 50, '#a855f7', []);
+      scopeCtx.fillStyle = '#a855f7';
+      scopeCtx.fillText('— 相位差 Δφ (0° 意味純電阻性，轉換效率最高)', cw - 260, y2 + 20);
+
+      // Scope 3: Power Regulation
+      const y3 = subH * 2 - 2;
+      drawSubScopeFrame(scopeCtx, marginL, y3, plotW, subH - 18, 
+        'CH3: 恆定振幅控制閉環 (DAC 驅動電壓 Vrms & 刀尖機械位移振幅 μm)', '160 V / μm', '0');
+
+      drawTrace(scopeCtx, history.dac_v, marginL, y3, plotW, subH - 18, 0, 160, '#f59e0b', []);
+      drawTrace(scopeCtx, history.amplitude, marginL, y3, plotW, subH - 18, 0, 120, '#ec4899', []);
+
+      scopeCtx.fillStyle = '#f59e0b';
+      scopeCtx.fillText('— DAC 驅動電壓 (Vrms)', cw - 260, y3 + 20);
+      scopeCtx.fillStyle = '#ec4899';
+      scopeCtx.fillText('— 刀尖機械位移振幅 (μm pk-pk)', cw - 260, y3 + 34);
+
+      scopeCtx.restore();
+    }
+
+    function drawSubScopeFrame(ctx, x, y, w, h, title, maxLabel, minLabel) {
+      ctx.fillStyle = '#06090e';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px Segoe UI';
+      ctx.fillText(title, x + 8, y + 14);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = '9px monospace';
+      ctx.fillText(maxLabel, x - 52, y + 10);
+      ctx.fillText(minLabel, x - 52, y + h - 2);
+    }
+
+    function drawTrace(ctx, dataArr, x, y, w, h, minVal, maxVal, color, dash) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash(dash);
+      ctx.beginPath();
+
+      const span = maxVal - minVal;
+      for (let i = 0; i < BUF_LEN; i++) {
+        const px = x + (i / (BUF_LEN - 1)) * w;
+        const val = Math.max(minVal, Math.min(maxVal, dataArr[i]));
+        const py = (y + h) - ((val - minVal) / span) * h;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
