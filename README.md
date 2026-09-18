@@ -1,4 +1,4 @@
-# ETHICON™ GEN11 超音波手術刀即時閉環追頻與能量控制模擬系統
+# 超音波手術刀即時閉環追頻與能量控制模擬系統
 ### Real-Time Resonance Tracking & Closed-Loop Energy Control Simulation
 
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://seantang666.github.io/UltrasonicSurgicalInstruments/)
