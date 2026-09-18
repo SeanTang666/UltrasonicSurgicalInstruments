@@ -399,4 +399,45 @@ Voltage / Current sensing → ADC → FPGA → 計算 Phase / Impedance → Reso
   - `[MODIFY] index.html`
   - `[MODIFY] DEVELOPMENT_LOG.md`
 
+---
 
+### [Iteration 14] 2026-09-18 17:15:00
+- **User Prompt**:
+  ```text
+  我對這個超聲刀開始剪到結束過程中的幾個重要波形轉變所代表的意義不明白，能否在刀具、波形進行過程中，加入一些註解
+  implementation plan 也請儲存，then preceed
+  ```
+- **問題分析與臨床物理意義解構 (Problem Diagnosis & Clinical Physical Analysis)**:
+  1. 超音波手術刀在進行血管閉合與離斷（Seal & Transect）全流程中，經歷四個關鍵的生理病理與聲學阻抗轉變：
+     - **Phase 1 (0.0s~1.5s) 夾持加壓與變性熔合**：55.5 kHz 高頻微振動打斷氫鍵摩擦生熱（60~80°C），膠原蛋白變性 ➔ 組織聲阻尼 Rm 爬升 (30→140 Ω)，總電流上升；組織彈性負載造成諧振頻率 fs 負向頻偏 (Δfs ≈ -80 Hz)；DPLL 自動向下追頻維持 0° 相角諧振。
+     - **Phase 2 (1.5s~3.4s) 空化沸騰、脫水乾涸與負載峰值**：組織液沸騰汽化，脫水變硬 ➔ 等效阻抗 Rm 與總電流達到最高峰 (Rm→250 Ω, Itot→1.8 A)，剛度頻偏達到極值 (-150 Hz)；閉環驅動電壓拉至頂峰 (~110 Vrms)。
+     - **Phase 3 (3.4s~4.1s) ⚡ 血管壁完全離斷瞬間**：管壁徹底切斷分離，刀尖脫離組織束縛 ➔ 電流與阻抗「垂直斷崖式驟降」(250Ω→18Ω, 1.8A→0.45A)，諧振頻率 fs 瞬間彈回標稱 55.5 kHz！此「負載突降」為演算法判定切斷成功的標誌性事件（Signature Event）。
+     - **Phase 4 (4.1s~5.5s) ✔ ATT 智能降載保護與冷卻**：組織已分離，若持續激發將導致空刀過熱（>200°C）並熔損鐵氟龙墊 ➔ GEN11 ATT 演算法自動調降功率至待機，發出切斷完成提示音。
+  2. 原先使用者僅能看到一堆線條起伏，缺乏直觀的文字解說、物理意義與病理生理關聯對照。
+- **程式改進與動作 (Coding Improvements)**:
+  1. **實作計畫存檔 (`IMPLEMENTATION_PLAN.md`)**：
+     - 已將完整臨床規劃與驗證計畫儲存至專案根目錄 `IMPLEMENTATION_PLAN.md`。
+  2. **新增「臨床手術切斷即時物理與病理生理階段註解條」(`.clinical-annotation-box`)**：
+     - 位於換能器面板與示波器之間，全寬展示當前階段徽章（Phase Badge）、時序進度條（Timer Progress Bar）。
+     - 3 欄式深入解讀：
+       - 🩺 組織病理與刀尖動作
+       - 📈 示波器波形關鍵轉變意義
+       - ⚡ FPGA 閉環調控應對機制
+  3. **4 階段互動導覽切換標籤列 (`.phase-tabs-row`)**：
+     - 提供 4 個階段快捷卡片，隨流程進度自動亮起**高亮呼吸發光指示燈**。
+     - 支援使用者隨時單擊任一階段標籤，直接跳轉並定格預覽該階段之組織狀態、變因數值與波形特徵！
+  4. **刀尖動畫區即時階段字幕橫幅 (`renderKnifeGraphic`)**：
+     - 於刀尖畫布左上方即時標註當前階段名稱與臨床意義。
+  5. **示波器各通道即時診斷標註與深度凍結解讀卡 (`renderScopeGraphic`)**：
+     - 示波器 CH1~CH4 各通道即時繪製對應階段的特徵解讀（如 DPLL 追頻、電壓爬升、斷崖驟降等）。
+     - 當處於暫停（Pause）或示波器凍結（Freeze）時，示波器頂部展開雙行深度解析卡片：顯示當前定格階段名稱及此瞬間波形特徵意義。
+  6. **Python GUI 桌面版同步 (`ultrasonic_surgical_sim.py`)**：
+     - 示波器底部同步加入 4 階段動態即時中文註解。
+  7. **全站與 GitHub Pages 部署**：
+     - 同步更新 `simulator.html`、`index.html`、`IMPLEMENTATION_PLAN.md`，提交並推送到 GitHub 遠端儲存庫。
+- **修改檔案**:
+  - `[NEW] IMPLEMENTATION_PLAN.md`
+  - `[MODIFY] simulator.html`
+  - `[MODIFY] index.html`
+  - `[MODIFY] ultrasonic_surgical_sim.py`
+  - `[MODIFY] DEVELOPMENT_LOG.md`

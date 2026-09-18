@@ -843,6 +843,18 @@ class UltrasonicSimulatorApp:
         cv.create_line(pts_curr, fill="#34d399", width=2)
         cv.create_text(x_right - 180, y0_4 + 10, text=f"— 總電流: {self.physics.total_current:.2f} A_rms", fill="#34d399", font=("Segoe UI", 8, "bold"), anchor=tk.W)
 
+        if self.current_scenario == "vessel_cut":
+            t = self.scenario_timer
+            if t < 1.5:
+                phase_text = "【Phase 1 變性熔合】Rm上升 ➔ fs負偏 (-80Hz) ➔ DPLL追頻調諧"
+            elif t < 3.5:
+                phase_text = "【Phase 2 脫水峰值】Rm達頂峰 (250Ω) ➔ 電流達1.8A ➔ 驅動電壓拉升"
+            elif t < 4.2:
+                phase_text = "【Phase 3 ⚡離斷瞬間】管壁切斷 ➔ 電流斷崖式驟降 ➔ 頻率彈回55.5kHz!"
+            else:
+                phase_text = "【Phase 4 ATT降載】切斷完成提示 ➔ 自動降載待機防過熱"
+            cv.create_text(x_left + 10, y1_4 + 12, text=phase_text, fill="#38bdf8", font=("Segoe UI", 9, "bold"), anchor=tk.W)
+
         if getattr(self, 'vessel_cut_state', 'idle') == "paused":
             cv.create_rectangle(x_left, y0_1, x_right, y1_4, outline="#f59e0b", width=2)
             cv.create_rectangle((x_left + x_right)//2 - 200, y0_1 + 5, (x_left + x_right)//2 + 200, y0_1 + 27, fill="#0f172a", outline="#f59e0b")

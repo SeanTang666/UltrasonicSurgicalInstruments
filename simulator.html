@@ -530,6 +530,162 @@
       animation: bounce 0.4s ease;
     }
     @keyframes bounce { 0% { transform: scale(0.8); } 70% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+    /* Clinical Annotation Box & Phase Tabs */
+    .clinical-annotation-box {
+      background: #080d17;
+      border: 1px solid #1e293b;
+      border-radius: 9px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+    .ann-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ann-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ann-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 4px;
+      background: #0284c7;
+      color: #ffffff;
+      letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+    }
+    .ann-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+    .ann-timer-wrap {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ann-timer-val {
+      color: var(--cyan);
+      font-weight: 800;
+    }
+    .ann-progress-track {
+      width: 100%;
+      height: 4px;
+      background: #1e293b;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .ann-progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #10b981);
+      transition: width 0.1s linear;
+    }
+    .ann-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 900px) {
+      .ann-grid { grid-template-columns: 1fr; }
+    }
+    .ann-item {
+      background: #0d1522;
+      border: 1px solid #1c2738;
+      border-radius: 6px;
+      padding: 7px 10px;
+    }
+    .ann-item-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #38bdf8;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ann-item-text {
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      line-height: 1.35;
+    }
+    .phase-tabs-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 800px) {
+      .phase-tabs-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    .phase-tab {
+      background: #0d1522;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      text-align: left;
+    }
+    .phase-tab:hover {
+      background: #162235;
+      border-color: #38bdf8;
+    }
+    .phase-tab.active {
+      background: #0c2338;
+      border-color: #0284c7;
+      box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+    }
+    .phase-tab.active::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+      animation: pulse-dot 1.2s infinite;
+    }
+    @keyframes pulse-dot {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.4); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+    .tab-num {
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: #38bdf8;
+      text-transform: uppercase;
+    }
+    .tab-name {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-top: 1px;
+    }
+    .tab-sub {
+      font-size: 0.62rem;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
   </style>
 </head>
 <body>
@@ -743,6 +899,61 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- 💡 臨床手術切斷即時物理與病理生理階段註解條 -->
+      <div class="clinical-annotation-box" id="clinicalAnnBox">
+        <div class="ann-header">
+          <div class="ann-title-wrap">
+            <span class="ann-badge" id="annBadge">階段 1/4: 夾持變性熔合</span>
+            <span class="ann-title" id="annTitle">超音波血管閉合切斷全流程動態物理與病理生理轉變註解</span>
+          </div>
+          <div class="ann-timer-wrap">
+            <span class="ann-timer-label">時序進度:</span>
+            <span class="ann-timer-val" id="annTimerVal">0.0s / 5.5s</span>
+          </div>
+        </div>
+        <div class="ann-progress-track">
+          <div class="ann-progress-bar" id="annProgressBar"></div>
+        </div>
+        <div class="ann-grid">
+          <div class="ann-item">
+            <div class="ann-item-label">🩺 組織病理與刀尖動作</div>
+            <div class="ann-item-text" id="annTissueText">刀鉗咬合血管，55.5 kHz 高頻微振動打斷氫鍵摩擦生熱（60~80°C），膠原蛋白變性形成無血密封栓塞。</div>
+          </div>
+          <div class="ann-item">
+            <div class="ann-item-label">📈 示波器波形關鍵轉變意義</div>
+            <div class="ann-item-text" id="annWaveformText">組織聲阻尼 Rm 爬升 (30→140 Ω)，總電流上升；組織彈性剛度使諧振頻率 fs 負向頻偏 (-80 Hz)。</div>
+          </div>
+          <div class="ann-item">
+            <div class="ann-item-label">⚡ FPGA 閉環調控應對機制</div>
+            <div class="ann-item-text" id="annFpgaText">DPLL 自動調降 DDS 輸出頻率維持 0° 相角諧振；恆振幅 PI 控制器加大電壓抵抗阻尼維持衝程。</div>
+          </div>
+        </div>
+        
+        <!-- 4 階段互動導覽切換標籤列 -->
+        <div class="phase-tabs-row" id="phaseTabsRow">
+          <button class="phase-tab active" data-phase="1" id="tabPhase1">
+            <span class="tab-num">Phase 1</span>
+            <span class="tab-name">夾持變性熔合 (0~1.5s)</span>
+            <span class="tab-sub">阻尼爬升 ➔ 剛度負偏 (Δfs: -80Hz)</span>
+          </button>
+          <button class="phase-tab" data-phase="2" id="tabPhase2">
+            <span class="tab-num">Phase 2</span>
+            <span class="tab-name">脫水乾涸峰值 (1.5~3.4s)</span>
+            <span class="tab-sub">阻抗 Rm 峰值 ➔ 電流升至 1.8A</span>
+          </button>
+          <button class="phase-tab" data-phase="3" id="tabPhase3">
+            <span class="tab-num">Phase 3</span>
+            <span class="tab-name">⚡ 血管壁離斷瞬間 (3.4~4.1s)</span>
+            <span class="tab-sub">⚡ 電流斷崖驟降 ➔ 頻率彈回 55.5k</span>
+          </button>
+          <button class="phase-tab" data-phase="4" id="tabPhase4">
+            <span class="tab-num">Phase 4</span>
+            <span class="tab-name">✔ ATT 智能降載 (4.1~5.5s)</span>
+            <span class="tab-sub">演算法自動降載 ➔ 避免過熱與燒焦</span>
+          </button>
+        </div>
       </div>
 
       <!-- Real-Time Multi-Trace Oscilloscope -->
@@ -1260,6 +1471,139 @@
       document.getElementById('val-stiffness').textContent = `${s.toFixed(2)} Hz`;
     }
 
+    function getVesselPhase(t) {
+      if (t < 1.5) {
+        return {
+          phase: 1,
+          name: "階段 1/4: 夾持變性熔合 (0.0s~1.5s)",
+          shortName: "1. 變性熔合",
+          badgeColor: "#0284c7",
+          tissue: "刀鉗咬合血管，55.5 kHz 高頻微振動打斷氫鍵摩擦生熱（60~80°C），膠原蛋白變性形成無血密封栓塞。",
+          waveform: "聲阻尼 Rm 爬升 (30→140 Ω)，總電流上升；組織彈性剛度使諧振頻率 fs 負向頻偏 (-80 Hz)。",
+          fpga: "DPLL 自動調降 DDS 輸出頻率維持 0° 相角諧振；恆振幅 PI 控制器加大電壓抵抗阻尼維持 65 μm 衝程。",
+          dsoCh1: "【Phase 1 變性】DPLL追頻中: 補償組織剛度負偏 (Δfs: -80Hz)",
+          dsoCh2: "【Phase 1 變性】恆衝程閉環: DAC 增益爬升補償阻尼",
+          dsoCh3: "【Phase 1 變性】刀尖維持 65 μm 目標切削衝程",
+          dsoCh4: "【Phase 1 變性】阻尼爬升期: Rm 30→140 Ω, 電流持續上升"
+        };
+      } else if (t < 3.4) {
+        return {
+          phase: 2,
+          name: "階段 2/4: 空化沸騰、脫水乾涸與負載峰值 (1.5s~3.4s)",
+          shortName: "2. 脫水乾涸",
+          badgeColor: "#d97706",
+          tissue: "溫度達 100°C，細胞液劇烈空化沸騰汽化（噴發微氣泡/水霧），組織脫水乾涸變硬，形成緻密無血凝固帶。",
+          waveform: "【負載峰值區】等效阻抗 Rm 與總電流達最高峰 (Rm→250 Ω, Itot→1.8 A)，剛度頻偏達極值 (-150 Hz)。",
+          fpga: "驅動電壓拉升至 90~110 Vrms 頂峰，全力維持刀尖機械衝程不被硬化組織悶死阻滯。",
+          dsoCh1: "【Phase 2 脫水峰值】極限剛度調諧: 剛性頻偏極值 (Δfs: -150Hz)",
+          dsoCh2: "【Phase 2 脫水峰值】驅動電壓拉至頂峰 (~110 Vrms) 全力對抗硬化組織",
+          dsoCh3: "【Phase 2 脫水峰值】高阻抗重負荷: 閉環全力維持刀尖衝程",
+          dsoCh4: "【Phase 2 脫水峰值】阻抗達到頂峰 Rm: 250 Ω, 總電流逼近 1.8 A 峰值"
+        };
+      } else if (t < 4.1) {
+        return {
+          phase: 3,
+          name: "階段 3/4: ⚡ 血管壁完全離斷瞬間 (3.4s~4.1s)",
+          shortName: "3. 血管離斷 ⚡",
+          badgeColor: "#059669",
+          tissue: "血管壁被徹底切斷分離（Transection），刀尖瞬間脫離組織約束，切削接觸面完全消失。",
+          waveform: "⚡【關鍵標誌】電流與阻抗「垂直斷崖式驟降」(250Ω→18Ω, 1.8A→0.45A)，諧振頻率 fs 瞬間彈回標稱 55.5 kHz！",
+          fpga: "偵測到阻抗與電流突降斷崖，識別為切斷成功特徵，觸發 ATT 智能降載保護機制。",
+          dsoCh1: "【Phase 3 ⚡離斷】組織約束解除: 諧振頻率 fs 瞬間彈回標稱 55,500 Hz!",
+          dsoCh2: "【Phase 3 ⚡離斷】負載突然消失: 驅動電壓迅速回調，防止空刀過衝",
+          dsoCh3: "【Phase 3 ⚡離斷】切削阻力瞬間歸零，衝程無阻力平穩運轉",
+          dsoCh4: "【Phase 3 ⚡關鍵標誌】電流與阻抗「垂直斷崖式驟降」(1.8A ➔ 0.45A)!"
+        };
+      } else {
+        return {
+          phase: 4,
+          name: "階段 4/4: ✔ ATT 智能降載保護與冷卻 (4.1s~5.5s)",
+          shortName: "4. ATT降載保護",
+          badgeColor: "#7c3aed",
+          tissue: "組織已完全切斷分離，若持續大功率激發將導致刀頭空刀過熱（>200°C）並熔損鐵氟龍墊（Teflon Pad）。",
+          waveform: "電壓、電流與功率自動降載至待機空載平穩直線，波形平緩無波動。",
+          fpga: "發出切斷完成提示音（Tone），限制輸出功率，防止器械損壞與周邊組織熱副損傷。",
+          dsoCh1: "【Phase 4 ATT】標稱諧振鎖定: 55,500 Hz, 0° 相位超平穩待機",
+          dsoCh2: "【Phase 4 ATT】智能降載: 回到 40 Vrms 待機安全電壓",
+          dsoCh3: "【Phase 4 ATT】低發熱低磨損維持運轉",
+          dsoCh4: "【Phase 4 ATT】空載基底電流: 0.45 A 平穩無波動"
+        };
+      }
+    }
+
+    function updateClinicalAnnotationUI() {
+      const annBadge = document.getElementById('annBadge');
+      const annTitle = document.getElementById('annTitle');
+      const annTimerVal = document.getElementById('annTimerVal');
+      const annProgressBar = document.getElementById('annProgressBar');
+      const annTissueText = document.getElementById('annTissueText');
+      const annWaveformText = document.getElementById('annWaveformText');
+      const annFpgaText = document.getElementById('annFpgaText');
+      const tabs = document.querySelectorAll('.phase-tab');
+      if (!annBadge) return;
+
+      if (scenario === "vessel") {
+        const p = getVesselPhase(scenTimer);
+        annBadge.textContent = p.name.split(':')[0];
+        annBadge.style.background = p.badgeColor;
+
+        if (vesselState === "paused") {
+          annTitle.textContent = `⏸ 流程暫停中 — 定格於【${p.shortName}】`;
+          annTimerVal.textContent = `${scenTimer.toFixed(2)}s (已凍結) / 5.5s`;
+        } else {
+          annTitle.textContent = p.name;
+          annTimerVal.textContent = `${scenTimer.toFixed(2)}s / 5.5s`;
+        }
+
+        annProgressBar.style.width = `${Math.min(100, (scenTimer / 5.5) * 100)}%`;
+        annTissueText.textContent = p.tissue;
+        annWaveformText.textContent = p.waveform;
+        annFpgaText.textContent = p.fpga;
+
+        tabs.forEach(t => {
+          if (parseInt(t.dataset.phase) === p.phase) t.classList.add('active');
+          else t.classList.remove('active');
+        });
+      } else {
+        annBadge.textContent = "手動工況模式";
+        annBadge.style.background = "#475569";
+        annTitle.textContent = "手動即時微調或點擊上方「血管閉合切斷全流程」觀察 4 階段波形轉變";
+        annTimerVal.textContent = "手動調控中";
+        annProgressBar.style.width = "0%";
+      }
+    }
+
+    document.querySelectorAll('.phase-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const phase = parseInt(tab.dataset.phase);
+        scenario = "vessel";
+        vesselState = "paused";
+        btnVessel.innerHTML = "▶ 繼續血管流程 (Resume)";
+        btnVessel.style.background = "#059669";
+        btnVessel.style.borderColor = "#10b981";
+
+        if (phase === 1) scenTimer = 0.7;
+        else if (phase === 2) scenTimer = 2.4;
+        else if (phase === 3) scenTimer = 3.7;
+        else if (phase === 4) scenTimer = 4.6;
+
+        const t = scenTimer;
+        if (t < 1.5) {
+          const prog = t / 1.5;
+          setStimulus(30 + 110 * prog, 40 + 55 * prog, -80 * prog);
+        } else if (t < 3.4) {
+          const prog = (t - 1.5) / 1.9;
+          setStimulus(140 + 110 * prog, 95, -80 - 70 * prog);
+        } else if (t < 4.1) {
+          const prog = 1.0 - (t - 3.4) / 0.7;
+          setStimulus(250 * prog, 95 * prog, -150 * prog);
+        } else {
+          setStimulus(0, 0, 0);
+        }
+        updateClinicalAnnotationUI();
+      });
+    });
+
     // -------------------------------------------------------------
     // Main 60 FPS Loop
     // -------------------------------------------------------------
@@ -1326,6 +1670,7 @@
         updateTelemetryUI();
       }
 
+      updateClinicalAnnotationUI();
       renderKnifeGraphic(isPaused);
       renderRfInspector(isPaused);
       renderScopeGraphic(isPaused);
@@ -1371,6 +1716,8 @@
 
       attAlert.style.display = (FPGA.powerActive && FPGA.transectionAlertTimer > 0) ? 'block' : 'none';
       stallAlert.style.display = (FPGA.powerActive && FPGA.isStalled) ? 'block' : 'none';
+
+      updateClinicalAnnotationUI();
     }
 
     function renderKnifeGraphic(isPaused) {
@@ -1384,6 +1731,23 @@
       const cw = w / dpr;
       const ch = h / dpr;
       const midY = ch / 2 + 5;
+
+      // On-Canvas Real-Time Phase Tag
+      if (scenario === "vessel") {
+        const p = getVesselPhase(scenTimer);
+        knifeCtx.save();
+        knifeCtx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        knifeCtx.fillRect(14, 7, 430, 22);
+        knifeCtx.strokeStyle = p.badgeColor;
+        knifeCtx.lineWidth = 1;
+        knifeCtx.strokeRect(14, 7, 430, 22);
+
+        knifeCtx.fillStyle = p.badgeColor;
+        knifeCtx.font = 'bold 11px Segoe UI';
+        knifeCtx.textAlign = 'left';
+        knifeCtx.fillText(`${p.name} | ${p.shortName}`, 22, 22);
+        knifeCtx.restore();
+      }
 
       // 1. Handpiece Piezo PZT Stack
       const pztX = 14;
@@ -1665,6 +2029,8 @@
       const y3 = y2 + subH + gap;
       const y4 = y3 + subH + gap;
 
+      const phaseInfo = (scenario === "vessel") ? getVesselPhase(scenTimer) : null;
+
       // -------------------------------------------------------------
       // Scope 1: CH1 (Dual-Axis: Left Freq 54~57 kHz, Right Phase -50°~+50°)
       // -------------------------------------------------------------
@@ -1707,6 +2073,12 @@
       scopeCtx.fillText(phaseStr, marginL + plotW - 10, y1 + 16);
       scopeCtx.textAlign = 'left';
 
+      if (phaseInfo) {
+        scopeCtx.fillStyle = phaseInfo.badgeColor;
+        scopeCtx.font = 'bold 11px Segoe UI';
+        scopeCtx.fillText(phaseInfo.dsoCh1, marginL + 12, y1 + subH - 9);
+      }
+
       // -------------------------------------------------------------
       // Scope 2: CH2 (DAC 驅動電壓: 0 ~ 160 Vrms)
       // -------------------------------------------------------------
@@ -1724,6 +2096,12 @@
       scopeCtx.fillStyle = '#f59e0b';
       scopeCtx.fillText(`— 即時驅動電壓: ${FPGA.powerActive ? FPGA.dacVrms.toFixed(1) : '0.0'} Vrms`, marginL + plotW - 10, y2 + 16);
       scopeCtx.textAlign = 'left';
+
+      if (phaseInfo) {
+        scopeCtx.fillStyle = phaseInfo.badgeColor;
+        scopeCtx.font = 'bold 11px Segoe UI';
+        scopeCtx.fillText(phaseInfo.dsoCh2, marginL + 12, y2 + subH - 9);
+      }
 
       // -------------------------------------------------------------
       // Scope 3: CH3 (刀尖機械位移衝程振幅: 0 ~ 120 μm)
@@ -1757,6 +2135,12 @@
       scopeCtx.fillText(`— 刀尖衝程: ${FPGA.powerActive ? Physics.amplitude_um.toFixed(1) : '0.0'} μm (目標設定: ${FPGA.targetAmplitude} μm)`, marginL + plotW - 10, y3 + 16);
       scopeCtx.textAlign = 'left';
 
+      if (phaseInfo) {
+        scopeCtx.fillStyle = phaseInfo.badgeColor;
+        scopeCtx.font = 'bold 11px Segoe UI';
+        scopeCtx.fillText(phaseInfo.dsoCh3, marginL + 12, y3 + subH - 9);
+      }
+
       // -------------------------------------------------------------
       // Scope 4: CH4 (換能器總電流: 0 ~ 2.50 A)
       // -------------------------------------------------------------
@@ -1774,6 +2158,12 @@
       scopeCtx.fillStyle = '#10b981';
       scopeCtx.fillText(`— 總電流: ${FPGA.powerActive ? Physics.itot_rms.toFixed(2) : '0.00'} A (等效阻抗 |Z|: ${Physics.impedance_mag.toFixed(1)} Ω)`, marginL + plotW - 10, y4 + 16);
       scopeCtx.textAlign = 'left';
+
+      if (phaseInfo) {
+        scopeCtx.fillStyle = phaseInfo.badgeColor;
+        scopeCtx.font = 'bold 11px Segoe UI';
+        scopeCtx.fillText(phaseInfo.dsoCh4, marginL + 12, y4 + subH - 9);
+      }
 
       // -------------------------------------------------------------
       // Bottom Horizontal Time Scale (10-div Markers)
@@ -1802,21 +2192,28 @@
         scopeCtx.lineWidth = 1.5;
         scopeCtx.strokeRect(marginL, y1, plotW, (y4 + subH) - y1);
 
-        // Overlay Badge
-        const badgeW = 520;
-        const badgeH = 26;
+        // Overlay Badge (Expanded 2-line diagnostic card)
+        const badgeW = 680;
+        const badgeH = 46;
         const bx = marginL + (plotW - badgeW) / 2;
         const by = y1 + 8;
-        scopeCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        scopeCtx.fillStyle = 'rgba(15, 23, 42, 0.95)';
         scopeCtx.fillRect(bx, by, badgeW, badgeH);
         scopeCtx.strokeStyle = '#f59e0b';
-        scopeCtx.lineWidth = 1;
+        scopeCtx.lineWidth = 1.5;
         scopeCtx.strokeRect(bx, by, badgeW, badgeH);
 
+        const p = phaseInfo;
         scopeCtx.fillStyle = '#fbbf24';
-        scopeCtx.font = 'bold 12px Segoe UI';
+        scopeCtx.font = 'bold 12.5px Segoe UI';
         scopeCtx.textAlign = 'center';
-        scopeCtx.fillText('⏸ 採樣凍結中 (DSO HOLD / PAUSED) — 保持當前數據，可切換時基縮放檢視', marginL + plotW / 2, by + 17);
+        const titleText = p ? `⏸ 示波器採樣已凍結 — 當前定格於【${p.name}】` : '⏸ 採樣凍結中 (DSO HOLD / PAUSED) — 保持當前數據，可切換時基縮放檢視';
+        scopeCtx.fillText(titleText, marginL + plotW / 2, by + 18);
+
+        scopeCtx.font = 'bold 11px Segoe UI';
+        scopeCtx.fillStyle = '#38bdf8';
+        const subText = p ? `💡【此瞬間波形意義】${p.waveform}` : '可自由切換時基（50ms ~ 10.0s）檢視定格瞬態波形';
+        scopeCtx.fillText(subText, marginL + plotW / 2, by + 35);
         scopeCtx.restore();
       }
 
